@@ -1,0 +1,24 @@
+# SSH鍵
+ZtgP-9P0C9Ur-qq
+ZtgP-9P0C9Ur-qq.pub
+
+# SSHディレクトリ全体
+.ssh/
+
+# Windowsシステムファイル
+NTUSER.DAT
+NTUSER.DAT*
+ntuser.dat*
+ntuser.ini
+
+# アプリデータ
+AppData/
+.cursor/
+.vscode/
+.vscode-shared/
+.android/
+.claude/
+
+# その他
+.bash_history
+.gitconfig
