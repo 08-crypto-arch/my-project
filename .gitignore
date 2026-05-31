@@ -17,15 +17,8 @@ AppData/
 .vscode/
 .vscode-shared/
 .android/
-# claude-works/ 以外を除外（claude-works/ はgit管理する）
-.claude/backups/
-.claude/projects/
-.claude/session-env/
-.claude/sessions/
-.claude/settings.json
-.claude/settings.local.json
-.claude/shell-snapshots/
-.claude/telemetry/
+# .claude/ 全体を除外
+.claude/
 
 # その他
 .bash_history
