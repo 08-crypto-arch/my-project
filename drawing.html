@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>お絵描きアプリ</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      display: flex;
+      flex-direction: column;
+      height: 100dvh;
+      background: #1a1a2e;
+      color: #eee;
+      font-family: 'Segoe UI', sans-serif;
+      overflow: hidden;
+    }
+
+    /* ツールバー */
+    #toolbar {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 8px 16px;
+      background: #16213e;
+      border-bottom: 1px solid #0f3460;
+      flex-wrap: wrap;
+    }
+
+    .toolbar-group {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 0 8px;
+      border-right: 1px solid #0f3460;
+    }
+
+    .toolbar-group:last-child {
+      border-right: none;
+    }
+
+    /* ツールボタン */
+    .tool-btn {
+      width: 36px;
+      height: 36px;
+      border: 2px solid transparent;
+      border-radius: 8px;
+      background: #0f3460;
+      color: #eee;
+      font-size: 16px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.15s, border-color 0.15s;
+    }
+
+    .tool-btn:hover {
+      background: #1a4a8a;
+    }
+
+    .tool-btn.active {
+      border-color: #e94560;
+      background: #1a4a8a;
+    }
+
+    .tool-btn:disabled {
+      opacity: 0.3;
+      cursor: not-allowed;
+    }
+
+    /* カラーピッカー */
+    #color-picker {
+      width: 36px;
+      height: 36px;
+      border: 2px solid #0f3460;
+      border-radius: 8px;
+      padding: 2px;
+      background: none;
+      cursor: pointer;
+    }
+
+    /* スライダー */
+    .slider-wrap {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+    }
+
+    input[type="range"] {
+      width: 80px;
+      accent-color: #e94560;
+    }
+
+    #size-label {
+      min-width: 24px;
+      text-align: right;
+      font-size: 12px;
+    }
+
+    /* キャンバス領域 */
+    #canvas-wrap {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+    }
+
+    #canvas {
+      background: #ffffff;
+      cursor: crosshair;
+      display: block;
+      box-shadow: 0 4px 32px rgba(0,0,0,0.5);
+    }
+
+    /* ツールごとのカーソル */
+    #canvas.tool-eraser { cursor: cell; }
+    #canvas.tool-line,
+    #canvas.tool-rect,
+    #canvas.tool-circle { cursor: crosshair; }
+
+    /* ステータスバー */
+    #statusbar {
+      padding: 3px 16px;
+      font-size: 11px;
+      color: #888;
+      background: #16213e;
+      border-top: 1px solid #0f3460;
+    }
+  </style>
+</head>
+<body>
+
+<div id="toolbar">
+
+  <!-- 描画ツール -->
+  <div class="toolbar-group">
+    <button class="tool-btn active" id="btn-pen"    data-tool="pen"    title="ペン (P)">✏️</button>
+    <button class="tool-btn"        id="btn-eraser" data-tool="eraser" title="消しゴム (E)"><svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="2" y="7" width="12" height="8" rx="2" transform="rotate(-30 2 7)" fill="#e94560" stroke="currentColor" stroke-width="1.2"/><rect x="2" y="11" width="12" height="4" rx="0 0 2 2" transform="rotate(-30 2 7)" fill="currentColor" opacity="0.4"/><line x1="3" y1="17" x2="17" y2="17" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></button>
+    <button class="tool-btn"        id="btn-line"   data-tool="line"   title="直線 (L)">╱</button>
+    <button class="tool-btn"        id="btn-rect"   data-tool="rect"   title="四角 (R)">▭</button>
+    <button class="tool-btn"        id="btn-circle" data-tool="circle" title="円 (C)">○</button>
+  </div>
+
+  <!-- 色 -->
+  <div class="toolbar-group">
+    <label for="color-picker" title="色を選ぶ">🎨</label>
+    <input type="color" id="color-picker" value="#e94560" title="ストロークカラー">
+  </div>
+
+  <!-- 太さ -->
+  <div class="toolbar-group">
+    <div class="slider-wrap">
+      <span>太さ</span>
+      <input type="range" id="size-slider" min="1" max="60" value="6">
+      <span id="size-label">6</span>
+    </div>
+  </div>
+
+  <!-- 操作 -->
+  <div class="toolbar-group">
+    <button class="tool-btn" id="btn-undo"  title="元に戻す (Ctrl+Z)">↩️</button>
+    <button class="tool-btn" id="btn-redo"  title="やり直し (Ctrl+Y)">↪️</button>
+    <button class="tool-btn" id="btn-clear" title="全消去">🗑️</button>
+  </div>
+
+  <!-- 保存 -->
+  <div class="toolbar-group">
+    <button class="tool-btn" id="btn-save" title="PNG 保存"><svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M10 13L10 4M10 13L7 10M10 13L13 10" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><path d="M4 14v1a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2v-1" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg></button>
+  </div>
+
+</div>
+
+<div id="canvas-wrap">
+  <canvas id="canvas"></canvas>
+</div>
+
+<div id="statusbar" id="statusbar">準備完了</div>
+
+<script>
+  const canvas  = document.getElementById('canvas');
+  const ctx     = canvas.getContext('2d');
+  const wrap    = document.getElementById('canvas-wrap');
+  const status  = document.getElementById('statusbar');
+
+  // ------------------------------------
+  // キャンバスサイズをウィンドウに合わせる
+  // ------------------------------------
+  function resizeCanvas() {
+    const w = wrap.clientWidth  - 32;
+    const h = wrap.clientHeight - 32;
+    // リサイズ時は現在の描画内容を保持する
+    const img = ctx.getImageData(0, 0, canvas.width, canvas.height);
+    canvas.width  = Math.max(w, 100);
+    canvas.height = Math.max(h, 100);
+    ctx.putImageData(img, 0, 0);
+  }
+
+  window.addEventListener('resize', resizeCanvas);
+  resizeCanvas();
+
+  // ------------------------------------
+  // 状態
+  // ------------------------------------
+  let tool     = 'pen';
+  let color    = '#e94560';
+  let size     = 6;
+  let drawing  = false;
+  let startX   = 0;
+  let startY   = 0;
+  let snapshot = null; // 図形プレビュー用のスナップショット
+
+  // Undo / Redo スタック
+  const MAX_HISTORY = 50;
+  const undoStack = [];
+  const redoStack = [];
+
+  function saveHistory() {
+    undoStack.push(canvas.toDataURL());
+    if (undoStack.length > MAX_HISTORY) undoStack.shift();
+    redoStack.length = 0; // 新しい操作でやり直し履歴を消す
+    updateHistoryButtons();
+  }
+
+  function restoreFromDataURL(dataURL) {
+    const img = new Image();
+    img.onload = () => {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.drawImage(img, 0, 0);
+    };
+    img.src = dataURL;
+  }
+
+  function undo() {
+    if (undoStack.length === 0) return;
+    redoStack.push(canvas.toDataURL());
+    restoreFromDataURL(undoStack.pop());
+    updateHistoryButtons();
+    setStatus('元に戻しました');
+  }
+
+  function redo() {
+    if (redoStack.length === 0) return;
+    undoStack.push(canvas.toDataURL());
+    restoreFromDataURL(redoStack.pop());
+    updateHistoryButtons();
+    setStatus('やり直しました');
+  }
+
+  function updateHistoryButtons() {
+    document.getElementById('btn-undo').disabled = undoStack.length === 0;
+    document.getElementById('btn-redo').disabled = redoStack.length === 0;
+  }
+
+  updateHistoryButtons();
+
+  // ------------------------------------
+  // ツール切り替え
+  // ------------------------------------
+  document.querySelectorAll('.tool-btn[data-tool]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      tool = btn.dataset.tool;
+      document.querySelectorAll('.tool-btn[data-tool]').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      canvas.className = 'tool-' + tool;
+      setStatus(btn.title);
+    });
+  });
+
+  // ------------------------------------
+  // 色・サイズ
+  // ------------------------------------
+  const colorPicker = document.getElementById('color-picker');
+  colorPicker.addEventListener('input', e => { color = e.target.value; });
+
+  const sizeSlider = document.getElementById('size-slider');
+  const sizeLabel  = document.getElementById('size-label');
+  sizeSlider.addEventListener('input', e => {
+    size = parseInt(e.target.value, 10);
+    sizeLabel.textContent = size;
+  });
+
+  // ------------------------------------
+  // 描画ユーティリティ
+  // ------------------------------------
+  function applyStyle(eraserMode = false) {
+    ctx.lineWidth   = size;
+    ctx.lineCap     = 'round';
+    ctx.lineJoin    = 'round';
+    if (eraserMode) {
+      ctx.globalCompositeOperation = 'destination-out';
+      ctx.strokeStyle = 'rgba(0,0,0,1)';
+    } else {
+      ctx.globalCompositeOperation = 'source-over';
+      ctx.strokeStyle = color;
+    }
+  }
+
+  function getPos(e) {
+    const rect = canvas.getBoundingClientRect();
+    const src  = e.touches ? e.touches[0] : e;
+    return {
+      x: src.clientX - rect.left,
+      y: src.clientY - rect.top,
+    };
+  }
+
+  // ------------------------------------
+  // 図形描画
+  // ------------------------------------
+  function drawShape(x, y) {
+    // スナップショットを復元してプレビューを更新
+    ctx.putImageData(snapshot, 0, 0);
+    applyStyle(false);
+    ctx.beginPath();
+    if (tool === 'line') {
+      ctx.moveTo(startX, startY);
+      ctx.lineTo(x, y);
+      ctx.stroke();
+    } else if (tool === 'rect') {
+      ctx.strokeRect(startX, startY, x - startX, y - startY);
+    } else if (tool === 'circle') {
+      const rx = (x - startX) / 2;
+      const ry = (y - startY) / 2;
+      ctx.ellipse(startX + rx, startY + ry, Math.abs(rx), Math.abs(ry), 0, 0, Math.PI * 2);
+      ctx.stroke();
+    }
+  }
+
+  // ------------------------------------
+  // マウス / タッチイベント
+  // ------------------------------------
+  function onStart(e) {
+    e.preventDefault();
+    drawing = true;
+    const { x, y } = getPos(e);
+    startX = x;
+    startY = y;
+
+    if (tool === 'pen' || tool === 'eraser') {
+      applyStyle(tool === 'eraser');
+      ctx.beginPath();
+      ctx.moveTo(x, y);
+    } else {
+      // 図形ツール：開始時にスナップショット保存
+      snapshot = ctx.getImageData(0, 0, canvas.width, canvas.height);
+    }
+  }
+
+  function onMove(e) {
+    e.preventDefault();
+    if (!drawing) {
+      const { x, y } = getPos(e);
+      setStatus(`X: ${Math.round(x)}  Y: ${Math.round(y)}`);
+      return;
+    }
+    const { x, y } = getPos(e);
+
+    if (tool === 'pen' || tool === 'eraser') {
+      applyStyle(tool === 'eraser');
+      ctx.lineTo(x, y);
+      ctx.stroke();
+    } else {
+      drawShape(x, y);
+    }
+  }
+
+  function onEnd(e) {
+    if (!drawing) return;
+    drawing = false;
+
+    if (tool !== 'pen' && tool !== 'eraser') {
+      const { x, y } = getPos(e.changedTouches ? { clientX: e.changedTouches[0].clientX, clientY: e.changedTouches[0].clientY } : e);
+      drawShape(x, y);
+    }
+
+    saveHistory();
+  }
+
+  canvas.addEventListener('mousedown',  onStart, { passive: false });
+  canvas.addEventListener('mousemove',  onMove,  { passive: false });
+  canvas.addEventListener('mouseup',    onEnd);
+  canvas.addEventListener('mouseleave', onEnd);
+  canvas.addEventListener('touchstart', onStart, { passive: false });
+  canvas.addEventListener('touchmove',  onMove,  { passive: false });
+  canvas.addEventListener('touchend',   onEnd,   { passive: false });
+
+  // ------------------------------------
+  // ボタン操作
+  // ------------------------------------
+  document.getElementById('btn-undo').addEventListener('click', undo);
+  document.getElementById('btn-redo').addEventListener('click', redo);
+
+  document.getElementById('btn-clear').addEventListener('click', () => {
+    if (!confirm('キャンバスを全消去しますか？')) return;
+    saveHistory();
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    setStatus('全消去しました');
+  });
+
+  document.getElementById('btn-save').addEventListener('click', () => {
+    const a = document.createElement('a');
+    a.download = `drawing-${Date.now()}.png`;
+    a.href = canvas.toDataURL('image/png');
+    a.click();
+    setStatus('PNG として保存しました');
+  });
+
+  // ------------------------------------
+  // キーボードショートカット
+  // ------------------------------------
+  document.addEventListener('keydown', e => {
+    if (e.target.tagName === 'INPUT') return;
+    if ((e.ctrlKey || e.metaKey) && e.key === 'z' && !e.shiftKey) { e.preventDefault(); undo(); }
+    if ((e.ctrlKey || e.metaKey) && (e.key === 'y' || (e.key === 'z' && e.shiftKey))) { e.preventDefault(); redo(); }
+    const keyMap = { p: 'pen', e: 'eraser', l: 'line', r: 'rect', c: 'circle' };
+    if (keyMap[e.key] && !e.ctrlKey && !e.metaKey) {
+      document.getElementById('btn-' + keyMap[e.key]).click();
+    }
+  });
+
+  // ------------------------------------
+  // ステータスバー
+  // ------------------------------------
+  function setStatus(msg) {
+    status.textContent = msg;
+  }
+</script>
+</body>
+</html>
