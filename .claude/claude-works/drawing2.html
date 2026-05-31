@@ -1,0 +1,742 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>宇宙お絵描き</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      background: #000;
+      overflow: hidden;
+      width: 100dvw;
+      height: 100dvh;
+      font-family: 'Segoe UI', sans-serif;
+      color: #fff;
+    }
+
+    /* ===== 宇宙キャンバス（全画面背景） ===== */
+    #space-canvas {
+      position: fixed;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+    }
+
+    /* ===== 上部タイトル ===== */
+    #header {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 20px 0 12px;
+      pointer-events: none;
+    }
+
+    #title {
+      font-size: 22px;
+      font-weight: 300;
+      letter-spacing: 0.15em;
+      color: rgba(180, 220, 255, 0.9);
+      text-shadow: 0 0 20px rgba(100, 180, 255, 0.5);
+    }
+
+    #subtitle {
+      margin-top: 5px;
+      font-size: 12px;
+      color: rgba(150, 190, 255, 0.5);
+      letter-spacing: 0.08em;
+    }
+
+    /* ===== 左：お絵描きパネル ===== */
+    #draw-panel {
+      position: fixed;
+      left: 20px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 400px;
+      max-width: calc(100vw - 200px);
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      background: rgba(8, 15, 40, 0.7);
+      border: 1px solid rgba(100, 160, 255, 0.2);
+      border-radius: 14px;
+      padding: 14px;
+      backdrop-filter: blur(10px);
+    }
+
+    #draw-panel-header {
+      font-size: 12px;
+      color: rgba(150, 200, 255, 0.7);
+      letter-spacing: 0.08em;
+      text-align: center;
+    }
+
+    /* お絵描きキャンバス（ネオン発光） */
+    #draw-canvas {
+      display: block;
+      width: 100%;
+      aspect-ratio: 4 / 5;
+      border-radius: 8px;
+      border: 1px solid rgba(80, 180, 255, 0.6);
+      cursor: crosshair;
+      background: rgba(2, 5, 20, 0.92);
+      touch-action: none; /* ブラウザの筆圧・ジェスチャーを無効化 */
+      box-shadow:
+        0 0 6px  rgba(80, 180, 255, 0.35),
+        0 0 14px rgba(80, 180, 255, 0.12),
+        inset 0 0 10px rgba(20, 60, 140, 0.25);
+    }
+
+    /* 送るボタン */
+    #btn-send {
+      width: 100%;
+      padding: 9px 0;
+      border: none;
+      background: rgba(60, 120, 220, 0.35);
+      color: rgba(180, 220, 255, 0.95);
+      font-size: 12px;
+      letter-spacing: 0.06em;
+      cursor: pointer;
+      border-radius: 8px;
+      border: 1px solid rgba(100, 160, 255, 0.25);
+      transition: background 0.15s;
+    }
+    #btn-send:hover { background: rgba(80, 150, 255, 0.45); }
+
+    /* カラースウォッチ */
+    .swatches {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      justify-content: center;
+    }
+
+    .swatch {
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      border: 2px solid transparent;
+      cursor: pointer;
+      transition: transform 0.12s, border-color 0.12s;
+    }
+    .swatch:hover  { transform: scale(1.2); }
+    .swatch.active { border-color: rgba(180, 220, 255, 0.9); transform: scale(1.15); }
+
+    /* 太さスライダー */
+    .slider-wrap {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 10px;
+      color: rgba(150, 190, 255, 0.6);
+    }
+    input[type="range"] { flex: 1; accent-color: #6ab0ff; }
+
+    /* アイコンボタン行 */
+    .tool-row {
+      display: flex;
+      gap: 6px;
+    }
+
+    .icon-btn {
+      flex: 1;
+      height: 28px;
+      border: none;
+      border-radius: 7px;
+      background: rgba(60, 100, 200, 0.25);
+      color: rgba(180, 210, 255, 0.85);
+      font-size: 12px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: 1px solid rgba(100, 160, 255, 0.15);
+      transition: background 0.12s;
+    }
+    .icon-btn:hover { background: rgba(80, 140, 255, 0.4); }
+
+    /* ===== 右：ズームボタン ===== */
+    #zoom-controls {
+      position: fixed;
+      right: 20px;
+      top: 50%;
+      transform: translateY(-50%);
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      align-items: center;
+    }
+
+    .zoom-btn {
+      width: 36px;
+      height: 36px;
+      border: none;
+      border-radius: 8px;
+      background: rgba(8, 15, 40, 0.7);
+      border: 1px solid rgba(100, 160, 255, 0.2);
+      color: rgba(180, 220, 255, 0.85);
+      font-size: 16px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      backdrop-filter: blur(8px);
+      transition: background 0.15s;
+    }
+    .zoom-btn:hover { background: rgba(60, 120, 220, 0.4); }
+
+    #zoom-label {
+      font-size: 10px;
+      color: rgba(150, 190, 255, 0.5);
+      text-align: center;
+    }
+
+    /* リセットズームボタン */
+    #btn-zoom-reset {
+      width: 36px;
+      height: 36px;
+      border: none;
+      border-radius: 8px;
+      background: rgba(8, 15, 40, 0.7);
+      border: 1px solid rgba(100, 160, 255, 0.2);
+      color: rgba(180, 220, 255, 0.7);
+      font-size: 14px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      backdrop-filter: blur(8px);
+      transition: background 0.15s;
+    }
+    #btn-zoom-reset:hover { background: rgba(60, 120, 220, 0.4); }
+
+    /* ===== 下部：ヒント＆操作ボタン ===== */
+    #bottom-bar {
+      position: fixed;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    #hint {
+      font-size: 12px;
+      color: rgba(150, 190, 255, 0.45);
+      letter-spacing: 0.06em;
+      pointer-events: none;
+      transition: opacity 1.5s;
+      white-space: nowrap;
+    }
+
+    .bottom-btn {
+      height: 30px;
+      padding: 0 12px;
+      border: none;
+      border-radius: 8px;
+      background: rgba(8, 15, 40, 0.7);
+      border: 1px solid rgba(100, 160, 255, 0.2);
+      color: rgba(180, 220, 255, 0.75);
+      font-size: 11px;
+      cursor: pointer;
+      backdrop-filter: blur(8px);
+      transition: background 0.15s;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+    .bottom-btn:hover { background: rgba(60, 120, 220, 0.4); }
+  </style>
+</head>
+<body>
+
+<!-- 宇宙キャンバス（全画面） -->
+<canvas id="space-canvas"></canvas>
+
+<!-- タイトル -->
+<div id="header">
+  <div id="title">宇宙お絵描き</div>
+  <div id="subtitle">何かを描いて、宇宙へ送り出そう</div>
+</div>
+
+<!-- お絵描きパネル -->
+<div id="draw-panel">
+  <div id="draw-panel-header">✦ 描画エリア</div>
+  <canvas id="draw-canvas"></canvas>
+  <button id="btn-send">宇宙へ送る ›</button>
+  <div class="swatches">
+    <div class="swatch active" data-color="rgba(220,240,255,0.9)" style="background:rgba(220,240,255,0.9);" title="白"></div>
+    <div class="swatch" data-color="#00e5ff"  style="background:#00e5ff;"  title="シアン"></div>
+    <div class="swatch" data-color="#ff6eb4"  style="background:#ff6eb4;"  title="ピンク"></div>
+    <div class="swatch" data-color="#ffd966"  style="background:#ffd966;"  title="ゴールド"></div>
+    <div class="swatch" data-color="#66ffb2"  style="background:#66ffb2;"  title="グリーン"></div>
+    <div class="swatch" data-color="#c0f0ff"  style="background:#c0f0ff;"  title="水色"></div>
+  </div>
+  <div class="slider-wrap">
+    <span>太</span>
+    <input type="range" id="size-slider" min="1" max="20" value="2">
+  </div>
+  <div class="tool-row">
+    <button class="icon-btn" id="btn-eraser" title="消しゴム">
+      <svg width="13" height="13" viewBox="0 0 20 20" fill="none">
+        <rect x="2" y="7" width="12" height="8" rx="2" transform="rotate(-30 2 7)" fill="#6ab0ff" stroke="currentColor" stroke-width="1.2"/>
+        <line x1="3" y1="17" x2="17" y2="17" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+      </svg>
+    </button>
+    <button class="icon-btn" id="btn-clear-draw" title="描画エリアを消去">🗑</button>
+  </div>
+</div>
+
+<!-- ズームコントロール（右） -->
+<div id="zoom-controls">
+  <button class="zoom-btn" id="btn-zoom-in"  title="拡大 (+)">＋</button>
+  <span id="zoom-label">100%</span>
+  <button class="zoom-btn" id="btn-zoom-out" title="縮小 (-)">－</button>
+  <button id="btn-zoom-reset" title="リセット">⌂</button>
+</div>
+
+<!-- 下部バー -->
+<div id="bottom-bar">
+  <div id="hint">▪ 描いたものが宇宙を漂い始めます</div>
+  <button class="bottom-btn" id="btn-clear-space">🗑 全消去</button>
+  <button class="bottom-btn" id="btn-save">
+    <svg width="13" height="13" viewBox="0 0 20 20" fill="none">
+      <path d="M10 13L10 4M10 13L7 10M10 13L13 10" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+      <path d="M4 14v1a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2v-1" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+    </svg>
+    保存
+  </button>
+</div>
+
+<script>
+  const drawCanvas  = document.getElementById('draw-canvas');
+  const drawCtx     = drawCanvas.getContext('2d');
+  const spaceCanvas = document.getElementById('space-canvas');
+  const spaceCtx    = spaceCanvas.getContext('2d');
+  const hint        = document.getElementById('hint');
+
+  const BG_STAR_COUNT  = 220;
+  const MIN_SPEED      = 0.2;
+  const MAX_SPEED      = 0.6;
+  const MAX_ROTATION   = 0.003;
+  const FADE_IN_STEP   = 0.025;
+  const GLOW_BLUR_BASE = 8;
+  const ZOOM_MIN       = 0.25;
+  const ZOOM_MAX       = 4;
+  const ZOOM_STEP      = 0.15;
+  const BOUNCE_COLORS  = ['rgba(220,240,255,0.9)', '#00e5ff', '#ff6eb4', '#ffd966', '#66ffb2', '#c0f0ff'];
+
+  // ===== キャンバスサイズ =====
+  // 描画パネルの右端をキャッシュ（跳ね返り判定に使用）
+  let drawPanelRight = 0;
+
+  function resizeCanvases() {
+    spaceCanvas.width  = window.innerWidth;
+    spaceCanvas.height = window.innerHeight;
+    const rect = drawCanvas.getBoundingClientRect();
+    drawCanvas.width  = rect.width;
+    drawCanvas.height = rect.height;
+    drawPanelRight = document.getElementById('draw-panel').getBoundingClientRect().right;
+  }
+
+  // 初回はレイアウト確定後に実行
+  window.addEventListener('resize', resizeCanvases);
+  setTimeout(resizeCanvases, 0);
+
+  // ===== ズーム =====
+  let zoom = 1;
+
+  function applyZoom(delta) {
+    zoom = Math.min(ZOOM_MAX, Math.max(ZOOM_MIN, zoom * (1 + delta)));
+    document.getElementById('zoom-label').textContent = Math.round(zoom * 100) + '%';
+  }
+
+  // ===== お絵描き =====
+  let penColor  = 'rgba(220,240,255,0.9)';
+  let penSize   = 2;
+  let toolMode  = 'pen';
+  let drawing   = false;
+  let lastPoint = null; // セグメント描画用
+
+  function getDrawPos(e) {
+    const rect = drawCanvas.getBoundingClientRect();
+    const src  = e.touches ? e.touches[0] : e;
+    return {
+      x: (src.clientX - rect.left) * (drawCanvas.width  / rect.width),
+      y: (src.clientY - rect.top)  * (drawCanvas.height / rect.height),
+    };
+  }
+
+  // なめらかな中点ベジェ曲線でネオン描画
+  let points = []; // ストローク中の点を蓄積
+
+  function redrawNeonPath(pts, layer) {
+    if (pts.length < 2) return;
+    drawCtx.lineCap  = 'round';
+    drawCtx.lineJoin = 'round';
+    drawCtx.globalCompositeOperation = 'source-over';
+    drawCtx.beginPath();
+    drawCtx.moveTo(pts[0].x, pts[0].y);
+    for (let i = 1; i < pts.length - 1; i++) {
+      const mx = (pts[i].x + pts[i + 1].x) / 2;
+      const my = (pts[i].y + pts[i + 1].y) / 2;
+      drawCtx.quadraticCurveTo(pts[i].x, pts[i].y, mx, my);
+    }
+    const last = pts[pts.length - 1];
+    drawCtx.lineTo(last.x, last.y);
+
+    if (layer === 'outer') {
+      drawCtx.lineWidth   = penSize * 4 + 6;
+      drawCtx.strokeStyle = penColor;
+      drawCtx.shadowColor = penColor;
+      drawCtx.shadowBlur  = penSize * 10 + 20;
+      drawCtx.globalAlpha = 0.25;
+    } else {
+      drawCtx.lineWidth   = penSize * 1.8 + 2;
+      drawCtx.strokeStyle = penColor;
+      drawCtx.shadowColor = penColor;
+      drawCtx.shadowBlur  = penSize * 4 + 8;
+      drawCtx.globalAlpha = 0.6;
+    }
+    drawCtx.stroke();
+    drawCtx.shadowBlur  = 0;
+    drawCtx.globalAlpha = 1;
+  }
+
+  // ストローク全体をキャンバスに再描画
+  function redrawAll() {
+    drawCtx.clearRect(0, 0, drawCanvas.width, drawCanvas.height);
+    // 確定済みストロークを復元
+    for (const s of committedStrokes) {
+      redrawNeonPath(s, 'outer');
+      redrawNeonPath(s, 'inner');
+    }
+    // 描画中のストロークをプレビュー
+    if (points.length >= 2) {
+      redrawNeonPath(points, 'outer');
+      redrawNeonPath(points, 'inner');
+    }
+  }
+
+  const committedStrokes = []; // 確定済みストロークの点列を保持
+
+  function onDrawStart(e) {
+    if (e.touches && e.touches.length > 1) return;
+    e.preventDefault();
+    drawing = true;
+    points  = [getDrawPos(e)];
+  }
+
+  function onDrawMove(e) {
+    if (e.touches && e.touches.length > 1) return;
+    e.preventDefault();
+    if (!drawing) return;
+    const p = getDrawPos(e);
+
+    if (toolMode === 'eraser') {
+      // 消しゴムはリアルタイムに destination-out で消す
+      if (!lastPoint) { lastPoint = p; return; }
+      drawCtx.lineCap  = 'round';
+      drawCtx.globalCompositeOperation = 'destination-out';
+      drawCtx.lineWidth   = penSize * 5;
+      drawCtx.strokeStyle = 'rgba(0,0,0,1)';
+      drawCtx.shadowBlur  = 0;
+      drawCtx.globalAlpha = 1;
+      drawCtx.beginPath();
+      drawCtx.moveTo(lastPoint.x, lastPoint.y);
+      drawCtx.lineTo(p.x, p.y);
+      drawCtx.stroke();
+      drawCtx.globalCompositeOperation = 'source-over';
+      lastPoint = p;
+      return;
+    }
+
+    points.push(p);
+    redrawAll();
+  }
+
+  function onDrawEnd() {
+    if (drawing && toolMode !== 'eraser' && points.length >= 2) {
+      committedStrokes.push([...points]);
+    }
+    drawing   = false;
+    lastPoint = null;
+    points    = [];
+  }
+
+  drawCanvas.addEventListener('mousedown',  onDrawStart);
+  drawCanvas.addEventListener('mousemove',  onDrawMove);
+  drawCanvas.addEventListener('mouseup',    onDrawEnd);
+  drawCanvas.addEventListener('mouseleave', onDrawEnd);
+  drawCanvas.addEventListener('touchstart', onDrawStart, { passive: false });
+  drawCanvas.addEventListener('touchmove',  onDrawMove,  { passive: false });
+  drawCanvas.addEventListener('touchend',   onDrawEnd,   { passive: false });
+
+  // ===== 宇宙ストローク =====
+  const floatingStrokes = [];
+
+  function pickBounceColor(current) {
+    const others = BOUNCE_COLORS.filter(c => c !== current);
+    return others[Math.floor(Math.random() * others.length)];
+  }
+
+  function buildGlowCanvas(srcDataURL, color, w, h) {
+    const off    = document.createElement('canvas');
+    off.width    = w;
+    off.height   = h;
+    const offCtx = off.getContext('2d');
+    const img    = new Image();
+    img.src      = srcDataURL;
+    offCtx.drawImage(img, 0, 0);
+    // 色オーバーレイ
+    offCtx.globalCompositeOperation = 'source-atop';
+    offCtx.fillStyle   = color;
+    offCtx.globalAlpha = 0.5;
+    offCtx.fillRect(0, 0, w, h);
+    offCtx.globalAlpha = 1;
+    offCtx.globalCompositeOperation = 'source-over';
+    // 発光
+    offCtx.filter      = `blur(${GLOW_BLUR_BASE}px)`;
+    offCtx.globalCompositeOperation = 'screen';
+    offCtx.globalAlpha = 0.45;
+    offCtx.drawImage(img, 0, 0);
+    offCtx.filter = 'none';
+    return off;
+  }
+
+  function sendToSpace() {
+    const dw = drawCanvas.width;
+    const dh = drawCanvas.height;
+    const W  = spaceCanvas.width;
+    const H  = spaceCanvas.height;
+
+    const srcDataURL = drawCanvas.toDataURL();
+    const color      = BOUNCE_COLORS[Math.floor(Math.random() * BOUNCE_COLORS.length)];
+    const scale      = 0.4 + Math.random() * 0.35;
+    const speed      = MIN_SPEED + Math.random() * (MAX_SPEED - MIN_SPEED);
+    const angle      = Math.random() * Math.PI * 2;
+
+    // 宇宙メインエリア（描画パネル右側）の中央に出現
+    const cx = (drawPanelRight + W) / 2;
+    const cy = H / 2;
+
+    const off = document.createElement('canvas');
+    off.width  = dw;
+    off.height = dh;
+    const offCtx = off.getContext('2d');
+    const img = new Image();
+    img.onload = () => {
+      offCtx.drawImage(img, 0, 0);
+      offCtx.globalCompositeOperation = 'screen';
+      offCtx.filter      = `blur(${GLOW_BLUR_BASE}px)`;
+      offCtx.globalAlpha = 0.45;
+      offCtx.drawImage(img, 0, 0);
+      offCtx.filter = 'none';
+
+      floatingStrokes.push({
+        img: off, srcDataURL, color,
+        cx, cy,
+        dx:    Math.cos(angle) * speed,
+        dy:    Math.sin(angle) * speed,
+        rot:   0,
+        dRot:  (Math.random() - 0.5) * MAX_ROTATION * 2,
+        alpha: 0,
+        w: dw, h: dh, scale,
+      });
+    };
+    img.src = srcDataURL;
+
+    // お絵描きエリアをリセット
+    committedStrokes.length = 0;
+    drawCtx.clearRect(0, 0, dw, dh);
+    hint.style.opacity = '0';
+  }
+
+  function recolorStroke(s) {
+    s.color = pickBounceColor(s.color);
+    const img = new Image();
+    img.onload = () => {
+      const off    = document.createElement('canvas');
+      off.width    = s.w;
+      off.height   = s.h;
+      const offCtx = off.getContext('2d');
+      offCtx.drawImage(img, 0, 0);
+      offCtx.globalCompositeOperation = 'source-atop';
+      offCtx.fillStyle   = s.color;
+      offCtx.globalAlpha = 0.55;
+      offCtx.fillRect(0, 0, s.w, s.h);
+      offCtx.globalAlpha = 1;
+      offCtx.globalCompositeOperation = 'screen';
+      offCtx.filter      = `blur(${GLOW_BLUR_BASE}px)`;
+      offCtx.globalAlpha = 0.4;
+      offCtx.drawImage(img, 0, 0);
+      offCtx.filter      = 'none';
+      s.img = off; // 読み込み完了後に差し替え
+    };
+    img.src = s.srcDataURL;
+  }
+
+  // ===== 背景星 =====
+  const bgStars = [];
+
+  function initBgStars() {
+    bgStars.length = 0;
+    for (let i = 0; i < BG_STAR_COUNT; i++) {
+      bgStars.push({
+        x:      Math.random() * spaceCanvas.width,
+        y:      Math.random() * spaceCanvas.height,
+        r:      Math.random() * 1.2 + 0.2,
+        alpha:  Math.random(),
+        dAlpha: (Math.random() * 0.008 + 0.002) * (Math.random() < 0.5 ? 1 : -1),
+        dx:     (Math.random() - 0.5) * 0.07,
+        dy:     (Math.random() - 0.5) * 0.07,
+      });
+    }
+  }
+  setTimeout(initBgStars, 50);
+
+  // ===== アニメーション =====
+  function animate() {
+    requestAnimationFrame(animate);
+
+    const W = spaceCanvas.width;
+    const H = spaceCanvas.height;
+    if (!W || !H) return;
+
+    const grad = spaceCtx.createRadialGradient(W * 0.5, H * 0.4, 0, W * 0.5, H * 0.5, W * 0.8);
+    grad.addColorStop(0,   '#0a0520');
+    grad.addColorStop(0.5, '#060318');
+    grad.addColorStop(1,   '#000008');
+    spaceCtx.fillStyle = grad;
+    spaceCtx.fillRect(0, 0, W, H);
+
+    spaceCtx.save();
+    spaceCtx.translate(W / 2, H / 2);
+    spaceCtx.scale(zoom, zoom);
+    spaceCtx.translate(-W / 2, -H / 2);
+
+    for (const s of bgStars) {
+      s.alpha += s.dAlpha;
+      if (s.alpha > 1) { s.alpha = 1; s.dAlpha *= -1; }
+      if (s.alpha < 0) { s.alpha = 0; s.dAlpha *= -1; }
+      s.x = (s.x + s.dx + W) % W;
+      s.y = (s.y + s.dy + H) % H;
+      spaceCtx.beginPath();
+      spaceCtx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
+      spaceCtx.fillStyle = `rgba(200,180,255,${s.alpha * 0.8})`;
+      spaceCtx.fill();
+    }
+
+    for (const s of floatingStrokes) {
+      if (s.alpha < 1) s.alpha = Math.min(1, s.alpha + FADE_IN_STEP);
+
+      s.cx  += s.dx;
+      s.cy  += s.dy;
+      s.rot += s.dRot;
+
+      const hw = s.w * s.scale / 2;
+      const hh = s.h * s.scale / 2;
+      // キャッシュ済みの描画パネル右端を使用
+      let bounced = false;
+      if (s.cx - hw < drawPanelRight) { s.cx = drawPanelRight + hw; s.dx =  Math.abs(s.dx); bounced = true; }
+      if (s.cx + hw > W)          { s.cx = W - hw;          s.dx = -Math.abs(s.dx); bounced = true; }
+      if (s.cy - hh < 0)          { s.cy = hh;              s.dy =  Math.abs(s.dy); bounced = true; }
+      if (s.cy + hh > H)          { s.cy = H - hh;          s.dy = -Math.abs(s.dy); bounced = true; }
+      if (bounced) recolorStroke(s);
+
+      spaceCtx.save();
+      spaceCtx.globalAlpha = s.alpha;
+      spaceCtx.translate(s.cx, s.cy);
+      spaceCtx.rotate(s.rot);
+      spaceCtx.scale(s.scale, s.scale);
+      spaceCtx.drawImage(s.img, -s.w / 2, -s.h / 2);
+      spaceCtx.restore();
+    }
+
+    spaceCtx.restore();
+  }
+
+  animate();
+
+  // ===== ズームイベント =====
+  document.addEventListener('wheel', e => {
+    // お絵描きパネル上のスクロールは無視
+    if (e.target.closest('#draw-panel')) return;
+    e.preventDefault();
+    applyZoom(e.deltaY < 0 ? ZOOM_STEP : -ZOOM_STEP);
+  }, { passive: false });
+
+  let lastPinchDist = null;
+  document.addEventListener('touchmove', e => {
+    if (e.touches.length !== 2) return;
+    const dx = e.touches[0].clientX - e.touches[1].clientX;
+    const dy = e.touches[0].clientY - e.touches[1].clientY;
+    const dist = Math.hypot(dx, dy);
+    if (lastPinchDist !== null) applyZoom((dist - lastPinchDist) / 200);
+    lastPinchDist = dist;
+  }, { passive: true });
+  document.addEventListener('touchend', () => { lastPinchDist = null; }, { passive: true });
+
+  document.addEventListener('keydown', e => {
+    if (e.key === '+' || e.key === '=') applyZoom( ZOOM_STEP * 2);
+    if (e.key === '-')                  applyZoom(-ZOOM_STEP * 2);
+    if (e.key === '0')                  { zoom = 1; document.getElementById('zoom-label').textContent = '100%'; }
+  });
+
+  // ===== ツールバー =====
+  document.querySelectorAll('.swatch').forEach(sw => {
+    sw.addEventListener('click', () => {
+      document.querySelectorAll('.swatch').forEach(s => s.classList.remove('active'));
+      sw.classList.add('active');
+      penColor = sw.dataset.color;
+      toolMode = 'pen';
+      document.getElementById('btn-eraser').style.background = '';
+    });
+  });
+
+  document.getElementById('size-slider').addEventListener('input', e => {
+    penSize = parseInt(e.target.value, 10);
+  });
+
+  document.getElementById('btn-eraser').addEventListener('click', () => {
+    toolMode = toolMode === 'eraser' ? 'pen' : 'eraser';
+    document.getElementById('btn-eraser').style.background =
+      toolMode === 'eraser' ? 'rgba(60,120,220,0.5)' : '';
+  });
+
+  document.getElementById('btn-clear-draw').addEventListener('click', () => {
+    committedStrokes.length = 0;
+    drawCtx.clearRect(0, 0, drawCanvas.width, drawCanvas.height);
+  });
+
+  document.getElementById('btn-send').addEventListener('click', sendToSpace);
+
+  document.getElementById('btn-zoom-in').addEventListener('click',    () => applyZoom( ZOOM_STEP * 2));
+  document.getElementById('btn-zoom-out').addEventListener('click',   () => applyZoom(-ZOOM_STEP * 2));
+  document.getElementById('btn-zoom-reset').addEventListener('click', () => {
+    zoom = 1;
+    document.getElementById('zoom-label').textContent = '100%';
+  });
+
+  document.getElementById('btn-clear-space').addEventListener('click', () => {
+    if (floatingStrokes.length === 0) return;
+    if (!confirm('宇宙を空にしますか？')) return;
+    floatingStrokes.length = 0;
+  });
+
+  document.getElementById('btn-save').addEventListener('click', () => {
+    const a = document.createElement('a');
+    a.download = `universe-${Date.now()}.png`;
+    a.href = spaceCanvas.toDataURL('image/png');
+    a.click();
+  });
+</script>
+</body>
+</html>
