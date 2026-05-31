@@ -20,6 +20,11 @@ Claude Code で作ったWebアプリの置き場です。
 
 色・素材・形・フォントなどを自由にカスタマイズできる電卓組み立てキット。
 
+### 🖩 電卓組み立てキット（新版）
+**[claude-works/calculator-kit/](https://08-crypto-arch.github.io/my-project/claude-works/calculator-kit/)**
+
+12パレット・8マテリアル・5レイアウトなど膨大な組み合わせでカスタマイズできる電卓デザインツール。
+
 ### 💅 ネイルサロン LP
 **[claude-works/nail-salon-lp.html](https://08-crypto-arch.github.io/my-project/claude-works/nail-salon-lp.html)**
 
