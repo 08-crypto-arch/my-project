@@ -24,3 +24,8 @@ Claude Code で作ったWebアプリの置き場です。
 **[claude-works/nail-salon-lp.html](https://08-crypto-arch.github.io/my-project/claude-works/nail-salon-lp.html)**
 
 ネイルサロン「Petal Nail」のランディングページ。
+
+### 💪 パーソナルジム LP
+**[claude-works/the-exceed-lp.html](https://08-crypto-arch.github.io/my-project/claude-works/the-exceed-lp.html)**
+
+パーソナルジム「THE EXCEED」のサービス紹介LP。Tailwind CSSで構築した、ゴールド×リッチブラックの高級感あるデザイン。
