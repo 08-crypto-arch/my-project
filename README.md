@@ -15,8 +15,8 @@ Claude Code で作ったWebアプリの置き場です。
 
 ペン・消しゴム・図形ツール・Undo/Redo 対応のシンプルなお絵描きアプリ。
 
-### 🖩 電卓カスタマイザー
-**[index.html](https://08-crypto-arch.github.io/my-project/)**
+### 🖩 電卓組み立てキット
+**[claude-works/calculator-kit/](https://08-crypto-arch.github.io/my-project/claude-works/calculator-kit/)**
 
 色・素材・形・フォントなどを自由にカスタマイズできる電卓組み立てキット。
 
