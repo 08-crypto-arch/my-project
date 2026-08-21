@@ -1,0 +1,1232 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>JavaScript学習アプリ - はじめてのプログラミング</title>
+<style>
+  :root {
+    /* オーシャンブルー配色（背景は白） */
+    --color-bg: #ffffff;
+    --color-panel: rgb(234 244 251);   /* ocean-blue-50 */
+    --color-panel-light: rgb(213 233 246); /* ocean-blue-100 */
+    --color-border: rgb(170 212 238);  /* ocean-blue-200 */
+    --color-text: rgb(9 29 42);        /* ocean-blue-900 */
+    --color-text-dim: rgb(26 88 127);  /* ocean-blue-700 */
+    --color-primary: rgb(43 147 212);  /* ocean-blue-500 */
+    --color-primary-dark: rgb(35 118 169); /* ocean-blue-600 */
+    --color-success: #15803d;
+    --color-success-bg: rgba(22, 163, 74, 0.1);
+    --color-error: #dc2626;
+    --color-error-bg: rgba(220, 38, 38, 0.08);
+    --color-warning: #d97706;
+    --code-bg: rgb(9 29 42);           /* ocean-blue-900 */
+    --code-bg-deep: rgb(6 21 30);      /* ocean-blue-950 */
+    --code-border: rgb(26 88 127);     /* ocean-blue-700 */
+    --code-text: rgb(234 244 251);     /* ocean-blue-50 */
+    --code-text-dim: rgb(128 190 229); /* ocean-blue-300 */
+    --sidebar-width: 260px;
+    --radius: 10px;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    font-family: "Hiragino Sans", "Yu Gothic", "Segoe UI", sans-serif;
+    background: var(--color-bg);
+    color: var(--color-text);
+    line-height: 1.7;
+  }
+
+  .app {
+    display: flex;
+    min-height: 100vh;
+  }
+
+  /* ===== サイドバー ===== */
+  .sidebar {
+    width: var(--sidebar-width);
+    flex-shrink: 0;
+    background: var(--color-panel);
+    border-right: 1px solid var(--color-border);
+    padding: 20px 16px;
+    position: sticky;
+    top: 0;
+    height: 100vh;
+    overflow-y: auto;
+  }
+
+  .sidebar h1 {
+    font-size: 18px;
+    margin: 0 0 4px;
+    color: var(--color-primary);
+  }
+
+  .sidebar .subtitle {
+    font-size: 12px;
+    color: var(--color-text-dim);
+    margin: 0 0 20px;
+  }
+
+  .progress-summary {
+    background: var(--color-panel-light);
+    border-radius: var(--radius);
+    padding: 12px 14px;
+    margin-bottom: 20px;
+  }
+
+  .progress-summary .progress-label {
+    font-size: 12px;
+    color: var(--color-text-dim);
+    margin-bottom: 6px;
+    display: flex;
+    justify-content: space-between;
+  }
+
+  .progress-bar-track {
+    height: 8px;
+    background: var(--color-panel-light);
+    border-radius: 4px;
+    overflow: hidden;
+  }
+
+  .progress-bar-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--color-primary), var(--color-success));
+    border-radius: 4px;
+    transition: width 0.4s ease;
+  }
+
+  .lesson-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+
+  .lesson-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 12px;
+    border-radius: var(--radius);
+    cursor: pointer;
+    color: var(--color-text-dim);
+    font-size: 14px;
+    transition: background 0.15s ease, color 0.15s ease;
+  }
+
+  .lesson-item:hover {
+    background: var(--color-panel-light);
+    color: var(--color-text);
+  }
+
+  .lesson-item.active {
+    background: var(--color-primary-dark);
+    color: #fff;
+  }
+
+  .lesson-item .check {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    border: 2px solid var(--color-border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    flex-shrink: 0;
+  }
+
+  .lesson-item.completed .check {
+    background: var(--color-success);
+    border-color: var(--color-success);
+    color: #fff;
+  }
+
+  /* ===== メインエリア ===== */
+  .main {
+    flex: 1;
+    padding: 32px 40px;
+    max-width: 820px;
+    margin: 0 auto;
+  }
+
+  .lesson-header {
+    margin-bottom: 24px;
+  }
+
+  .lesson-header .lesson-number {
+    font-size: 13px;
+    color: var(--color-primary);
+    font-weight: bold;
+    letter-spacing: 0.05em;
+  }
+
+  .lesson-header h2 {
+    font-size: 26px;
+    margin: 4px 0 0;
+  }
+
+  .card {
+    background: var(--color-panel);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius);
+    padding: 22px 24px;
+    margin-bottom: 20px;
+  }
+
+  .card h3 {
+    font-size: 15px;
+    margin: 0 0 14px;
+    color: var(--color-text-dim);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .explanation p {
+    margin: 0 0 12px;
+    font-size: 15px;
+  }
+
+  .explanation ul {
+    margin: 0 0 12px;
+    padding-left: 22px;
+  }
+
+  .explanation li {
+    font-size: 15px;
+    margin-bottom: 6px;
+  }
+
+  .example-label {
+    font-size: 13px;
+    font-weight: bold;
+    color: var(--color-text-dim);
+    margin: 0 0 8px;
+  }
+
+  pre.code-example {
+    background: var(--code-bg);
+    border: 1px solid var(--code-border);
+    border-radius: 8px;
+    padding: 16px 18px;
+    overflow-x: auto;
+    font-family: "Consolas", "Menlo", monospace;
+    font-size: 13.5px;
+    color: var(--code-text);
+    white-space: pre;
+  }
+
+  /* 「なぜこの結果になるの？」ボックス
+     近接: 見出しと本文の間に区切り線を入れて2つのグループに分ける／各項目の間だけgapを空ける
+     整列: 番号バッジの幅を固定し、すべての本文の左端を揃える
+     反復: 番号バッジ・コード・結果チップのスタイルを全レッスンで統一して繰り返す
+     対比: 見出しは色付き太字、結果チップは塗りつぶしで目立たせて優先度を明確にする */
+  .example-note {
+    background: var(--color-panel-light);
+    border: 1px solid var(--color-border);
+    border-left: 4px solid var(--color-primary);
+    border-radius: 0 10px 10px 0;
+    padding: 16px 18px 14px;
+    margin-top: 16px;
+  }
+
+  .example-note-heading {
+    font-size: 15px;
+    font-weight: bold;
+    color: var(--color-primary-dark);
+    margin: 0 0 12px;
+    padding-bottom: 10px;
+    border-bottom: 1px dashed var(--color-border);
+  }
+
+  .reason-list {
+    counter-reset: reason;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .reason-item {
+    counter-increment: reason;
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  .reason-item::before {
+    content: counter(reason);
+    flex: 0 0 22px;
+    width: 22px;
+    height: 22px;
+    margin-top: 1px;
+    border-radius: 50%;
+    background: var(--color-primary);
+    color: #fff;
+    font-size: 12px;
+    font-weight: bold;
+    line-height: 22px;
+    text-align: center;
+  }
+
+  .reason-text {
+    flex: 1;
+    margin: 0;
+    font-size: 14px;
+    line-height: 1.7;
+    min-width: 0;
+  }
+
+  .result-chip {
+    display: inline-block;
+    background: var(--color-primary);
+    color: #fff;
+    font-family: "Consolas", "Menlo", monospace;
+    font-size: 12.5px;
+    font-weight: bold;
+    padding: 1px 8px;
+    border-radius: 6px;
+    margin: 0 1px;
+    white-space: nowrap;
+  }
+
+  /* ===== クイズ ===== */
+  .quiz-question {
+    margin-bottom: 18px;
+  }
+
+  .quiz-question:last-child {
+    margin-bottom: 0;
+  }
+
+  .quiz-question p.q-text {
+    font-size: 15px;
+    margin: 0 0 10px;
+    font-weight: bold;
+  }
+
+  .quiz-options {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .quiz-option {
+    text-align: left;
+    background: var(--color-panel-light);
+    border: 1px solid var(--color-border);
+    color: var(--color-text);
+    padding: 10px 14px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: border-color 0.15s ease, background 0.15s ease;
+  }
+
+  .quiz-option:hover:not(:disabled) {
+    border-color: var(--color-primary);
+  }
+
+  .quiz-option.correct {
+    border-color: var(--color-success);
+    background: var(--color-success-bg);
+  }
+
+  .quiz-option.incorrect {
+    border-color: var(--color-error);
+    background: var(--color-error-bg);
+  }
+
+  .quiz-option:disabled {
+    cursor: default;
+  }
+
+  .quiz-feedback {
+    margin-top: 8px;
+    font-size: 13.5px;
+    padding: 8px 12px;
+    border-radius: 6px;
+  }
+
+  .quiz-feedback.correct {
+    background: var(--color-success-bg);
+    color: var(--color-success);
+  }
+
+  .quiz-feedback.incorrect {
+    background: var(--color-error-bg);
+    color: var(--color-error);
+  }
+
+  /* ===== 実践コーナー ===== */
+  .challenge-text {
+    background: rgba(43, 147, 212, 0.08);
+    border-left: 3px solid var(--color-primary);
+    padding: 10px 14px;
+    border-radius: 0 6px 6px 0;
+    font-size: 14px;
+    margin-bottom: 14px;
+  }
+
+  textarea.code-editor {
+    width: 100%;
+    min-height: 140px;
+    background: var(--code-bg);
+    color: var(--code-text);
+    border: 1px solid var(--code-border);
+    border-radius: 8px;
+    padding: 14px;
+    font-family: "Consolas", "Menlo", monospace;
+    font-size: 13.5px;
+    resize: vertical;
+    tab-size: 2;
+  }
+
+  .editor-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 10px;
+  }
+
+  button.btn {
+    background: var(--color-primary);
+    color: #fff;
+    border: none;
+    padding: 9px 18px;
+    border-radius: 8px;
+    font-size: 14px;
+    cursor: pointer;
+    font-weight: bold;
+    transition: background 0.15s ease;
+  }
+
+  button.btn:hover {
+    background: var(--color-primary-dark);
+  }
+
+  button.btn.secondary {
+    background: transparent;
+    border: 1px solid var(--color-border);
+    color: var(--color-text-dim);
+  }
+
+  button.btn.secondary:hover {
+    color: var(--color-text);
+    border-color: var(--color-text-dim);
+  }
+
+  .output-panel {
+    margin-top: 12px;
+    background: var(--code-bg-deep);
+    border: 1px solid var(--code-border);
+    border-radius: 8px;
+    padding: 12px 14px;
+    font-family: "Consolas", "Menlo", monospace;
+    font-size: 13px;
+    min-height: 40px;
+    white-space: pre-wrap;
+    word-break: break-word;
+  }
+
+  .output-panel .out-line {
+    color: #a9e6c4;
+  }
+
+  .output-panel .out-error {
+    color: var(--color-error);
+  }
+
+  .output-panel .out-empty {
+    color: var(--code-text-dim);
+  }
+
+  /* ===== フッターナビ ===== */
+  .lesson-nav {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 28px;
+  }
+
+  .complete-banner {
+    background: var(--color-success-bg);
+    border: 1px solid var(--color-success);
+    color: var(--color-success);
+    padding: 10px 16px;
+    border-radius: 8px;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  /* ===== 修了証ページ ===== */
+  .certificate-page {
+    flex: 1;
+    max-width: 900px;
+    margin: 40px auto;
+    padding: 0 24px 60px;
+    text-align: center;
+    box-sizing: border-box;
+  }
+
+  .cert-back {
+    margin-bottom: 24px;
+  }
+
+  .cert-heading h2 {
+    font-size: 26px;
+    margin: 0 0 8px;
+    color: var(--color-primary-dark);
+  }
+
+  .cert-heading p {
+    color: var(--color-text-dim);
+    margin: 0 0 28px;
+    font-size: 15px;
+  }
+
+  .certificate-canvas-wrap {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 28px;
+  }
+
+  .certificate-canvas {
+    width: 100%;
+    max-width: 700px;
+    height: auto;
+    border-radius: 8px;
+    box-shadow: 0 8px 28px rgba(9, 29, 42, 0.15);
+  }
+
+  .certificate-actions {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+
+  .share-x {
+    border-color: var(--color-text);
+    color: var(--color-text);
+  }
+
+  .share-x:hover {
+    background: var(--color-text);
+    color: #fff;
+  }
+
+  @media (max-width: 780px) {
+    .app { flex-direction: column; }
+    .sidebar { width: 100%; height: auto; position: relative; }
+    .main { padding: 24px 18px; max-width: 100%; }
+    .certificate-page { margin: 24px auto; padding: 0 18px 40px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="app" id="app"></div>
+
+<script>
+(function () {
+  "use strict";
+
+  // ===== 設定・定数 =====
+  var STORAGE_KEY = "jsLearningApp.progress.v1";
+  var CERT_DATE_STORAGE_KEY = "jsLearningApp.certDate.v1";
+  var CERT_CANVAS_WIDTH = 1200;
+  var CERT_CANVAS_HEIGHT = 850;
+
+  // ===== レッスンデータ =====
+  var LESSONS = [
+    {
+      id: "intro",
+      title: "JavaScriptって何？",
+      explanation:
+        "<p>JavaScript は、Webページに「動き」や「反応」をつけるためのプログラミング言語です。ボタンを押すと表示が切り替わったり、入力した内容に応じて画面が変化したりするのは、JavaScript が裏側で動いているからです。</p>" +
+        "<p>Webページは主に3つの要素でできています。<strong>HTML</strong> が文章の骨組み、<strong>CSS</strong> が見た目、そして <strong>JavaScript</strong> が動き・振る舞いを担当します。</p>" +
+        "<p>JavaScript でできることの例:</p>" +
+        "<ul>" +
+        "<li>ボタンをクリックしたら画面の内容を変える</li>" +
+        "<li>フォームに入力した内容が正しいかチェックする</li>" +
+        "<li>ゲームやアニメーションを作る</li>" +
+        "<li>サーバーと通信してデータを取得・送信する</li>" +
+        "<li>スマホアプリやデスクトップアプリを作る</li>" +
+        "</ul>" +
+        "<p>このアプリでは、そんな JavaScript の基礎を1つずつ学んでいきます。</p>",
+      example:
+        'document.querySelector("button").addEventListener("click", function () {\n  alert("クリックされました！");\n});',
+      exampleNote:
+        '<li class="reason-item"><p class="reason-text">このコードは「<code>button</code> がクリックされたら、<code>alert(...)</code> でポップアップを表示する」という指示です。</p></li>' +
+        '<li class="reason-item"><p class="reason-text"><code>addEventListener</code> の部分は「クリックされるまで待っておき、実際にクリックされたときだけ中の処理を実行する」という特別な書き方です。ボタンを押すという「反応」に応じて画面が変化するのはこのためです。</p></li>',
+      quiz: [
+        {
+          question: "JavaScript は主に何をするための言語？",
+          options: [
+            "Webページの文章の骨組みを作る言語",
+            "Webページに動き・振る舞いを与える言語",
+            "画像を編集するための言語",
+            "文書を印刷するための言語"
+          ],
+          correct: 1,
+          explain: "HTML が構造、CSS が見た目を担当するのに対し、JavaScript は画面の動きや振る舞いを担当します。"
+        },
+        {
+          question: "JavaScript でできることとして正しくないものはどれ？",
+          options: [
+            "ボタンクリックで画面の表示を変える",
+            "フォームの入力内容をチェックする",
+            "紙の書類を物理的に印刷する",
+            "サーバーと通信してデータをやり取りする"
+          ],
+          correct: 2,
+          explain: "JavaScript はプログラムなので、画面上の処理は得意ですが、印刷機を動かすような物理的な作業はできません。"
+        }
+      ]
+    },
+    {
+      id: "variables",
+      title: "変数と値",
+      explanation:
+        "<p>プログラムでは、名前をつけてデータを保存できます。これを「変数」と呼びます。値が変わる可能性があるものには <code>let</code>、変わらないものには <code>const</code> を使います。</p>" +
+        "<p>変数名にはわかりやすい英単語をつけるのがコツです。</p>",
+      example:
+        'let name = "太郎";\nconst age = 15;\n\nconsole.log(name);\nconsole.log(age);',
+      exampleNote:
+        '<li class="reason-item"><p class="reason-text">1〜2行目で、<code>name</code> という箱に文字列 <code>"太郎"</code>、<code>age</code> という箱に数値 <code>15</code> をそれぞれ入れています。</p></li>' +
+        '<li class="reason-item"><p class="reason-text"><code>console.log(変数名)</code> は「その変数の箱の中身をそのまま表示する」命令です。実行結果は <span class="result-chip">太郎</span> → <span class="result-chip">15</span> の順に表示されます。</p></li>',
+      challengeText: "変数 message に好きな文字列を代入して、console.log で表示してみよう。",
+      starterCode: '// ここに変数を宣言してみよう\nlet message = "こんにちは、JavaScript！";\nconsole.log(message);'
+    },
+    {
+      id: "operators",
+      title: "演算子と計算",
+      explanation:
+        "<p>JavaScript では <code>+ - * /</code> などの演算子を使って計算ができます。文字列同士を <code>+</code> でつなげることもできます（文字列結合）。</p>" +
+        "<p><code>%</code> は割り算の余りを求める演算子です。</p>",
+      example:
+        'let a = 7;\nlet b = 3;\n\nconsole.log(a + b); // 10\nconsole.log(a % b); // 1（余り）\nconsole.log("Hello, " + "World!");',
+      exampleNote:
+        '<li class="reason-item"><p class="reason-text"><code>a + b</code> は 7 と 3 を足すただの足し算です。結果は <span class="result-chip">10</span> になります。</p></li>' +
+        '<li class="reason-item"><p class="reason-text"><code>a % b</code> は「7 を 3 で割ったときの余り」を求める演算子です。7 ÷ 3 は 2 あまり 1 なので、余りである <span class="result-chip">1</span> が結果になります。</p></li>' +
+        '<li class="reason-item"><p class="reason-text">文字列同士を <code>+</code> でつなぐと、足し算ではなく「連結（くっつける）」という意味になります。そのため結果は <span class="result-chip">"Hello, World!"</span> という1つの文字列になります。</p></li>',
+      challengeText: "2つの数値を足し算・掛け算して、それぞれ console.log で表示してみよう。",
+      starterCode: "let x = 4;\nlet y = 5;\n\nconsole.log(x + y);\nconsole.log(x * y);"
+    },
+    {
+      id: "conditionals",
+      title: "条件分岐（if / else）",
+      explanation:
+        "<p><code>if</code> 文を使うと、条件によって処理を分けられます。条件が true なら if の中身、false なら else の中身が実行されます。</p>" +
+        "<p>比較には <code>===</code>（等しい）、<code>&gt;</code>（より大きい）などを使います。</p>",
+      example:
+        'let score = 80;\n\nif (score >= 60) {\n  console.log("合格！");\n} else {\n  console.log("不合格...");\n}',
+      exampleNote:
+        '<li class="reason-item"><p class="reason-text"><code>if (score >= 60)</code> の部分で、「<code>score</code> が 60 以上かどうか」を毎回チェックしています。</p></li>' +
+        '<li class="reason-item"><p class="reason-text">今回 <code>score</code> は 80 で条件を満たす（true）ので、<code>if</code> の中身である <span class="result-chip">"合格！"</span> が実行されます。<code>else</code> の中身は条件を満たさなかったときだけ実行されるので、今回は使われません。</p></li>' +
+        '<li class="reason-item"><p class="reason-text">もし <code>score</code> が 59 以下だったら条件が false になるので、代わりに <code>else</code> 側の <span class="result-chip">"不合格..."</span> が表示されます。</p></li>',
+      challengeText: "変数 temperature を作り、25以上なら「暑い」、そうでなければ「快適」と表示してみよう。",
+      starterCode: 'let temperature = 30;\n\nif (temperature >= 25) {\n  console.log("暑い");\n} else {\n  console.log("快適");\n}'
+    },
+    {
+      id: "loops",
+      title: "繰り返し（for / while）",
+      explanation:
+        "<p>同じ処理を何度も行いたいときは「繰り返し（ループ）」を使います。<code>for</code> 文は回数が決まっている繰り返しに便利です。</p>" +
+        "<p><code>for (let i = 0; i &lt; 5; i++)</code> は「i が 0 から 4 になるまで、1つずつ増やしながら繰り返す」という意味です。</p>",
+      example:
+        'for (let i = 0; i < 5; i++) {\n  console.log("カウント: " + i);\n}',
+      exampleNote:
+        '<li class="reason-item"><p class="reason-text"><code>for (let i = 0; i < 5; i++)</code> は「<code>i</code> を 0 からスタートし、5 未満の間、1ずつ増やしながら繰り返す」という意味です。</p></li>' +
+        '<li class="reason-item"><p class="reason-text"><code>i</code> は 0, 1, 2, 3, 4 の順に5回変化するので、「カウント: 0」から「カウント: 4」まで <span class="result-chip">5行</span> が表示されます。</p></li>' +
+        '<li class="reason-item"><p class="reason-text"><code>i</code> が 5 になった時点で条件 <code>i < 5</code> が false になるため、そこでループが終了します。</p></li>',
+      challengeText: "for文を使って1から5までの数字を順番に表示してみよう。",
+      starterCode: "for (let i = 1; i <= 5; i++) {\n  console.log(i);\n}"
+    },
+    {
+      id: "arrays",
+      title: "配列",
+      explanation:
+        "<p>配列は、複数の値をひとつにまとめて扱える箱です。<code>[ ]</code> を使って作り、要素には <code>配列名[番号]</code>（番号は0から始まる）でアクセスします。</p>" +
+        "<p><code>.length</code> で配列の要素数、<code>.push()</code> で要素を追加できます。</p>",
+      example:
+        'let fruits = ["りんご", "バナナ", "みかん"];\n\nconsole.log(fruits[0]);   // りんご\nconsole.log(fruits.length); // 3\n\nfruits.push("ぶどう");\nconsole.log(fruits);',
+      exampleNote:
+        '<li class="reason-item"><p class="reason-text">配列の番号（インデックス）は 0 から始まるため、<code>fruits[0]</code> は1番目の要素である <span class="result-chip">"りんご"</span> を指します。</p></li>' +
+        '<li class="reason-item"><p class="reason-text"><code>fruits.length</code> は要素の数を数えるので、この時点では <span class="result-chip">3</span> です。</p></li>' +
+        '<li class="reason-item"><p class="reason-text"><code>fruits.push("ぶどう")</code> で末尾に追加されるので、実行後の配列は <span class="result-chip">4つの要素</span> を持つ配列に変化します。</p></li>',
+      challengeText: "好きな食べ物を3つ配列に入れて、for文で全部表示してみよう。",
+      starterCode: 'let foods = ["寿司", "ラーメン", "カレー"];\n\nfor (let i = 0; i < foods.length; i++) {\n  console.log(foods[i]);\n}'
+    },
+    {
+      id: "functions",
+      title: "関数",
+      explanation:
+        "<p>関数は、処理をひとまとめにして名前をつけたものです。同じ処理を何度も使い回せます。<code>function</code> キーワードで定義し、<code>return</code> で結果を返します。</p>",
+      example:
+        'function add(a, b) {\n  return a + b;\n}\n\nconsole.log(add(2, 3)); // 5\nconsole.log(add(10, 20)); // 30',
+      exampleNote:
+        '<li class="reason-item"><p class="reason-text"><code>add(2, 3)</code> のように呼び出すと、渡した値 2 と 3 がそれぞれ引数 <code>a</code> と <code>b</code> に入り、<code>a + b</code> が計算されます。</p></li>' +
+        '<li class="reason-item"><p class="reason-text"><code>return</code> は「値を呼び出し元に返す」命令なので、計算結果である <span class="result-chip">5</span> が <code>add(2, 3)</code> という式そのものの値になります。</p></li>' +
+        '<li class="reason-item"><p class="reason-text">同じ理由で <code>add(10, 20)</code> は <span class="result-chip">30</span> になります。</p></li>',
+      challengeText: "2つの数値を受け取り、掛け算した結果を返す関数 multiply を作って呼び出してみよう。",
+      starterCode: "function multiply(a, b) {\n  return a * b;\n}\n\nconsole.log(multiply(3, 4));"
+    },
+    {
+      id: "objects",
+      title: "オブジェクト",
+      explanation:
+        "<p>オブジェクトは「名前（キー）」と「値」をセットで管理できるデータの入れ物です。ひとつのモノが持つ複数の情報をまとめるのに便利です。</p>" +
+        "<p><code>オブジェクト名.キー名</code> で値を取り出せます。</p>",
+      example:
+        'let person = {\n  name: "太郎",\n  age: 15,\n  hobby: "サッカー"\n};\n\nconsole.log(person.name);\nconsole.log(person.age);',
+      exampleNote:
+        '<li class="reason-item"><p class="reason-text"><code>person</code> オブジェクトには <code>name</code>・<code>age</code>・<code>hobby</code> という3つのキーと、それぞれの値が入っています。</p></li>' +
+        '<li class="reason-item"><p class="reason-text">「<code>オブジェクト名.キー名</code>」と書くと、そのキーの値だけを取り出せます。<code>person.name</code> は <span class="result-chip">"太郎"</span>、<code>person.age</code> は <span class="result-chip">15</span> になります。</p></li>',
+      challengeText: "自分のプロフィール（name, age など）を持つオブジェクトを作り、中身を表示してみよう。",
+      starterCode: 'let profile = {\n  name: "花子",\n  age: 14,\n  favoriteColor: "青"\n};\n\nconsole.log(profile.name);\nconsole.log(profile.age);\nconsole.log(profile.favoriteColor);'
+    },
+    {
+      id: "final",
+      title: "総合演習",
+      explanation:
+        "<p>これまで学んだ「変数」「条件分岐」「繰り返し」「配列」「関数」をぜんぶ使って、簡単なプログラムを作ってみましょう。</p>" +
+        "<p>下のコード例は、配列に入った点数のリストから合格者だけを数える関数の例です。参考にして、自分なりに書き換えてみましょう。</p>",
+      example:
+        'function countPassed(scores) {\n  let count = 0;\n  for (let i = 0; i < scores.length; i++) {\n    if (scores[i] >= 60) {\n      count++;\n    }\n  }\n  return count;\n}\n\nlet scores = [80, 45, 90, 55, 70];\nconsole.log(countPassed(scores) + "人合格");',
+      exampleNote:
+        '<li class="reason-item"><p class="reason-text"><code>countPassed</code> 関数は <code>scores</code> 配列を <code>for</code> 文で1つずつ確認し、<code>if (scores[i] >= 60)</code> で60点以上かをチェックしています。条件を満たすたびに <code>count</code> を1増やします。</p></li>' +
+        '<li class="reason-item"><p class="reason-text"><code>scores = [80, 45, 90, 55, 70]</code> のうち60点以上は80・90・70の3つなので、<code>count</code> は最終的に <span class="result-chip">3</span> になります。</p></li>' +
+        '<li class="reason-item"><p class="reason-text">文字列 <code>"人合格"</code> と連結しているので、実行結果は <span class="result-chip">"3人合格"</span> と表示されます。</p></li>',
+      challengeText: "自分の好きな数字の配列を作り、その中から偶数だけを表示する関数を作ってみよう（ヒント: num % 2 === 0）。",
+      starterCode: 'function showEvenNumbers(numbers) {\n  for (let i = 0; i < numbers.length; i++) {\n    if (numbers[i] % 2 === 0) {\n      console.log(numbers[i]);\n    }\n  }\n}\n\nshowEvenNumbers([1, 2, 3, 4, 5, 6]);'
+    }
+  ];
+
+  // ===== 状態管理 =====
+  var state = {
+    currentLessonIndex: 0,
+    completedLessons: loadProgress(),
+    view: "lesson" // "lesson" | "certificate"
+  };
+
+  function loadProgress() {
+    try {
+      var raw = localStorage.getItem(STORAGE_KEY);
+      return raw ? JSON.parse(raw) : [];
+    } catch (e) {
+      return [];
+    }
+  }
+
+  function saveProgress() {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(state.completedLessons));
+  }
+
+  function markLessonCompleted(lessonId) {
+    if (state.completedLessons.indexOf(lessonId) === -1) {
+      state.completedLessons.push(lessonId);
+      saveProgress();
+    }
+  }
+
+  function isLessonCompleted(lessonId) {
+    return state.completedLessons.indexOf(lessonId) !== -1;
+  }
+
+  // ===== HTMLエスケープ（ユーザー入力やコードを安全に表示するため） =====
+  function escapeHtml(str) {
+    return String(str)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;");
+  }
+
+  // 修了証の発行日を取得（初回表示時に確定し、以降は同じ日付を使い回す）
+  function getCertificateDate() {
+    var stored = localStorage.getItem(CERT_DATE_STORAGE_KEY);
+    if (stored) {
+      return stored;
+    }
+    var now = new Date();
+    var formatted = now.getFullYear() + "年" + (now.getMonth() + 1) + "月" + now.getDate() + "日";
+    localStorage.setItem(CERT_DATE_STORAGE_KEY, formatted);
+    return formatted;
+  }
+
+  // ===== 描画 =====
+  var appEl = document.getElementById("app");
+
+  function render() {
+    appEl.innerHTML = "";
+
+    if (state.view === "certificate") {
+      appEl.appendChild(renderCertificatePage());
+      return;
+    }
+
+    var lesson = LESSONS[state.currentLessonIndex];
+    appEl.appendChild(renderSidebar());
+    appEl.appendChild(renderMain(lesson));
+  }
+
+  function renderSidebar() {
+    var sidebar = document.createElement("div");
+    sidebar.className = "sidebar";
+
+    var completedCount = state.completedLessons.length;
+    var totalCount = LESSONS.length;
+    var percent = Math.round((completedCount / totalCount) * 100);
+
+    sidebar.innerHTML =
+      '<h1>JS学習アプリ</h1>' +
+      '<p class="subtitle">はじめてのJavaScript</p>' +
+      '<div class="progress-summary">' +
+      '  <div class="progress-label"><span>進捗</span><span>' + completedCount + ' / ' + totalCount + '</span></div>' +
+      '  <div class="progress-bar-track"><div class="progress-bar-fill" style="width:' + percent + '%"></div></div>' +
+      '</div>';
+
+    var list = document.createElement("ul");
+    list.className = "lesson-list";
+
+    LESSONS.forEach(function (lesson, index) {
+      var item = document.createElement("li");
+      item.className = "lesson-item" +
+        (index === state.currentLessonIndex ? " active" : "") +
+        (isLessonCompleted(lesson.id) ? " completed" : "");
+
+      var checkMark = isLessonCompleted(lesson.id) ? "✓" : (index + 1);
+      item.innerHTML =
+        '<span class="check">' + checkMark + '</span>' +
+        '<span>' + escapeHtml(lesson.title) + '</span>';
+
+      item.addEventListener("click", function () {
+        state.currentLessonIndex = index;
+        render();
+        window.scrollTo(0, 0);
+      });
+
+      list.appendChild(item);
+    });
+
+    sidebar.appendChild(list);
+    return sidebar;
+  }
+
+  function renderMain(lesson) {
+    var main = document.createElement("div");
+    main.className = "main";
+
+    // --- ヘッダー ---
+    var header = document.createElement("div");
+    header.className = "lesson-header";
+    header.innerHTML =
+      '<div class="lesson-number">LESSON ' + (state.currentLessonIndex + 1) + ' / ' + LESSONS.length + '</div>' +
+      '<h2>' + escapeHtml(lesson.title) + '</h2>';
+    main.appendChild(header);
+
+    // --- 解説カード ---
+    var explanationCard = document.createElement("div");
+    explanationCard.className = "card";
+    explanationCard.innerHTML =
+      '<h3>📘 解説</h3>' +
+      '<div class="explanation">' + lesson.explanation + '</div>' +
+      '<p class="example-label">📝 これは例題です（書き換えたいときは下の「実践コーナー」で）</p>' +
+      '<pre class="code-example">' + escapeHtml(lesson.example) + '</pre>' +
+      (lesson.exampleNote
+        ? '<div class="example-note">' +
+            '<div class="example-note-heading">🔍 なぜこの結果になるの？</div>' +
+            '<ol class="reason-list">' + lesson.exampleNote + '</ol>' +
+          '</div>'
+        : '');
+    main.appendChild(explanationCard);
+
+    // --- クイズカード（クイズが用意されているレッスンのみ表示） ---
+    if (lesson.quiz && lesson.quiz.length) {
+      main.appendChild(renderQuizCard(lesson));
+    }
+
+    // --- 実践コーナー（レッスンに実践課題がある場合のみ表示） ---
+    if (lesson.challengeText) {
+      main.appendChild(renderChallengeCard(lesson));
+    }
+
+    // --- 完了バナー・ナビゲーション ---
+    main.appendChild(renderNav(lesson));
+
+    return main;
+  }
+
+  function renderQuizCard(lesson) {
+    var card = document.createElement("div");
+    card.className = "card";
+
+    var heading = document.createElement("h3");
+    heading.textContent = "✏️ 理解度クイズ";
+    card.appendChild(heading);
+
+    lesson.quiz.forEach(function (q, qIndex) {
+      var qBlock = document.createElement("div");
+      qBlock.className = "quiz-question";
+
+      var qText = document.createElement("p");
+      qText.className = "q-text";
+      qText.textContent = (qIndex + 1) + ". " + q.question;
+      qBlock.appendChild(qText);
+
+      var optionsWrap = document.createElement("div");
+      optionsWrap.className = "quiz-options";
+
+      var feedback = document.createElement("div");
+      feedback.style.display = "none";
+
+      q.options.forEach(function (optionText, optionIndex) {
+        var btn = document.createElement("button");
+        btn.className = "quiz-option";
+        btn.textContent = optionText;
+
+        btn.addEventListener("click", function () {
+          var allButtons = optionsWrap.querySelectorAll(".quiz-option");
+          allButtons.forEach(function (b) { b.disabled = true; });
+
+          var isCorrect = optionIndex === q.correct;
+          btn.classList.add(isCorrect ? "correct" : "incorrect");
+
+          if (!isCorrect) {
+            allButtons[q.correct].classList.add("correct");
+          }
+
+          feedback.className = "quiz-feedback " + (isCorrect ? "correct" : "incorrect");
+          feedback.textContent = (isCorrect ? "正解！ " : "残念！ ") + q.explain;
+          feedback.style.display = "block";
+        });
+
+        optionsWrap.appendChild(btn);
+      });
+
+      qBlock.appendChild(optionsWrap);
+      qBlock.appendChild(feedback);
+      card.appendChild(qBlock);
+    });
+
+    return card;
+  }
+
+  function renderChallengeCard(lesson) {
+    var card = document.createElement("div");
+    card.className = "card";
+
+    var heading = document.createElement("h3");
+    heading.textContent = "💻 実践コーナー";
+    card.appendChild(heading);
+
+    var challengeText = document.createElement("div");
+    challengeText.className = "challenge-text";
+    challengeText.textContent = lesson.challengeText;
+    card.appendChild(challengeText);
+
+    var editor = document.createElement("textarea");
+    editor.className = "code-editor";
+    editor.value = lesson.starterCode;
+    editor.spellcheck = false;
+    card.appendChild(editor);
+
+    var actions = document.createElement("div");
+    actions.className = "editor-actions";
+
+    var runBtn = document.createElement("button");
+    runBtn.className = "btn";
+    runBtn.textContent = "▶ 実行する";
+
+    var resetBtn = document.createElement("button");
+    resetBtn.className = "btn secondary";
+    resetBtn.textContent = "リセット";
+
+    actions.appendChild(runBtn);
+    actions.appendChild(resetBtn);
+    card.appendChild(actions);
+
+    var output = document.createElement("div");
+    output.className = "output-panel";
+    output.innerHTML = '<span class="out-empty">「実行する」を押すと、ここに結果が表示されます。</span>';
+    card.appendChild(output);
+
+    runBtn.addEventListener("click", function () {
+      runUserCode(editor.value, output);
+    });
+
+    resetBtn.addEventListener("click", function () {
+      editor.value = lesson.starterCode;
+      output.innerHTML = '<span class="out-empty">「実行する」を押すと、ここに結果が表示されます。</span>';
+    });
+
+    return card;
+  }
+
+  // ユーザーが書いたコードを実行し、console.log の出力を画面に表示する
+  function runUserCode(code, outputEl) {
+    var logs = [];
+    var originalConsoleLog = console.log;
+
+    console.log = function () {
+      var parts = Array.prototype.slice.call(arguments).map(function (arg) {
+        if (typeof arg === "object") {
+          try {
+            return JSON.stringify(arg);
+          } catch (e) {
+            return String(arg);
+          }
+        }
+        return String(arg);
+      });
+      logs.push(parts.join(" "));
+    };
+
+    try {
+      var userFunction = new Function(code);
+      userFunction();
+
+      if (logs.length === 0) {
+        outputEl.innerHTML = '<span class="out-empty">（console.log の出力はありませんでした）</span>';
+      } else {
+        outputEl.innerHTML = logs.map(function (line) {
+          return '<div class="out-line">' + escapeHtml(line) + '</div>';
+        }).join("");
+      }
+    } catch (err) {
+      outputEl.innerHTML = '<div class="out-error">エラー: ' + escapeHtml(err.message) + '</div>';
+    } finally {
+      console.log = originalConsoleLog;
+    }
+  }
+
+  function renderNav(lesson) {
+    var nav = document.createElement("div");
+    nav.className = "lesson-nav";
+
+    var leftSlot = document.createElement("div");
+
+    if (isLessonCompleted(lesson.id)) {
+      var banner = document.createElement("div");
+      banner.className = "complete-banner";
+      banner.innerHTML = "✅ このレッスンは完了しました";
+      leftSlot.appendChild(banner);
+    } else {
+      var completeBtn = document.createElement("button");
+      completeBtn.className = "btn secondary";
+      completeBtn.textContent = "このレッスンを完了にする";
+      completeBtn.addEventListener("click", function () {
+        markLessonCompleted(lesson.id);
+        render();
+        window.scrollTo(0, 0);
+      });
+      leftSlot.appendChild(completeBtn);
+    }
+
+    nav.appendChild(leftSlot);
+
+    if (state.currentLessonIndex < LESSONS.length - 1) {
+      var nextBtn = document.createElement("button");
+      nextBtn.className = "btn";
+      nextBtn.textContent = "次のレッスンへ →";
+      nextBtn.addEventListener("click", function () {
+        markLessonCompleted(lesson.id);
+        state.currentLessonIndex++;
+        render();
+        window.scrollTo(0, 0);
+      });
+      nav.appendChild(nextBtn);
+    } else if (isLessonCompleted(lesson.id)) {
+      var certBtn = document.createElement("button");
+      certBtn.className = "btn";
+      certBtn.textContent = "🎓 修了証を見る";
+      certBtn.addEventListener("click", function () {
+        state.view = "certificate";
+        render();
+        window.scrollTo(0, 0);
+      });
+      nav.appendChild(certBtn);
+    }
+
+    return nav;
+  }
+
+  // ===== 修了証ページ =====
+  function renderCertificatePage() {
+    var page = document.createElement("div");
+    page.className = "certificate-page";
+
+    var backBtn = document.createElement("button");
+    backBtn.className = "btn secondary cert-back";
+    backBtn.textContent = "← TOPに戻る";
+    backBtn.addEventListener("click", function () {
+      state.view = "lesson";
+      state.currentLessonIndex = 0;
+      render();
+      window.scrollTo(0, 0);
+    });
+    page.appendChild(backBtn);
+
+    var heading = document.createElement("div");
+    heading.className = "cert-heading";
+    heading.innerHTML =
+      "<h2>🎉 修了おめでとうございます！</h2>" +
+      "<p>全" + LESSONS.length + "レッスンを修了しました。下の修了証をダウンロード・シェアできます。</p>";
+    page.appendChild(heading);
+
+    var canvasWrap = document.createElement("div");
+    canvasWrap.className = "certificate-canvas-wrap";
+
+    var canvas = document.createElement("canvas");
+    canvas.className = "certificate-canvas";
+    canvas.width = CERT_CANVAS_WIDTH;
+    canvas.height = CERT_CANVAS_HEIGHT;
+    canvasWrap.appendChild(canvas);
+    page.appendChild(canvasWrap);
+
+    var actions = document.createElement("div");
+    actions.className = "certificate-actions";
+
+    var downloadBtn = document.createElement("button");
+    downloadBtn.className = "btn";
+    downloadBtn.textContent = "⬇ 画像をダウンロード";
+    downloadBtn.addEventListener("click", function () {
+      canvas.toBlob(function (blob) {
+        var url = URL.createObjectURL(blob);
+        var link = document.createElement("a");
+        link.href = url;
+        link.download = "javascript-certificate.png";
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+      }, "image/png");
+    });
+    actions.appendChild(downloadBtn);
+
+    var shareBtn = document.createElement("button");
+    shareBtn.className = "btn secondary share-x";
+    shareBtn.textContent = "𝕏 でシェアする";
+    shareBtn.addEventListener("click", function () {
+      var shareText = "JavaScript学習アプリで全" + LESSONS.length + "レッスンを修了しました！🎉📘 #JavaScript学習";
+      var shareUrl = "https://twitter.com/intent/tweet?text=" + encodeURIComponent(shareText);
+      window.open(shareUrl, "_blank", "noopener,noreferrer");
+    });
+    actions.appendChild(shareBtn);
+
+    page.appendChild(actions);
+
+    // canvas をDOMに追加した後に描画する
+    drawCertificate(canvas);
+
+    return page;
+  }
+
+  // 修了証のデザインをcanvasに描画する
+  function drawCertificate(canvas) {
+    var ctx = canvas.getContext("2d");
+    var w = canvas.width;
+    var h = canvas.height;
+
+    var oceanPrimary = "rgb(43, 147, 212)";
+    var oceanDark = "rgb(35, 118, 169)";
+    var oceanText = "rgb(9, 29, 42)";
+    var oceanDim = "rgb(26, 88, 127)";
+    var fontFamily = "'Hiragino Sans','Yu Gothic','Segoe UI',sans-serif";
+
+    // 背景
+    ctx.fillStyle = "#ffffff";
+    ctx.fillRect(0, 0, w, h);
+
+    // 二重の飾り枠
+    ctx.strokeStyle = oceanPrimary;
+    ctx.lineWidth = 10;
+    ctx.strokeRect(30, 30, w - 60, h - 60);
+
+    ctx.strokeStyle = oceanDark;
+    ctx.lineWidth = 2;
+    ctx.strokeRect(50, 50, w - 100, h - 100);
+
+    ctx.textAlign = "center";
+
+    // 英語サブタイトル
+    ctx.fillStyle = oceanDim;
+    ctx.font = "bold 24px " + fontFamily;
+    ctx.fillText("CERTIFICATE OF COMPLETION", w / 2, 160);
+
+    // メインタイトル
+    ctx.fillStyle = oceanText;
+    ctx.font = "bold 54px " + fontFamily;
+    ctx.fillText("JavaScript学習 修了証", w / 2, 235);
+
+    // 装飾ライン
+    ctx.strokeStyle = oceanPrimary;
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.moveTo(w / 2 - 120, 270);
+    ctx.lineTo(w / 2 + 120, 270);
+    ctx.stroke();
+
+    // 本文
+    ctx.fillStyle = oceanDim;
+    ctx.font = "20px " + fontFamily;
+    ctx.fillText("これは、JavaScript学習アプリの全レッスンを", w / 2, 360);
+    ctx.fillText("修了したことを証明するものです。", w / 2, 395);
+
+    // レッスン数
+    ctx.fillStyle = oceanPrimary;
+    ctx.font = "bold 22px " + fontFamily;
+    ctx.fillText("全 " + LESSONS.length + " レッスン修了", w / 2, 460);
+
+    // 発行日
+    ctx.fillStyle = oceanText;
+    ctx.font = "18px " + fontFamily;
+    ctx.fillText("発行日: " + getCertificateDate(), w / 2, 560);
+
+    // シール（丸バッジ）
+    var sealX = w / 2;
+    var sealY = 660;
+    var sealR = 55;
+
+    ctx.beginPath();
+    ctx.arc(sealX, sealY, sealR, 0, Math.PI * 2);
+    ctx.fillStyle = oceanPrimary;
+    ctx.fill();
+
+    ctx.beginPath();
+    ctx.arc(sealX, sealY, sealR - 8, 0, Math.PI * 2);
+    ctx.strokeStyle = "#ffffff";
+    ctx.lineWidth = 3;
+    ctx.stroke();
+
+    // チェックマーク
+    ctx.strokeStyle = "#ffffff";
+    ctx.lineWidth = 6;
+    ctx.lineCap = "round";
+    ctx.lineJoin = "round";
+    ctx.beginPath();
+    ctx.moveTo(sealX - 22, sealY);
+    ctx.lineTo(sealX - 6, sealY + 18);
+    ctx.lineTo(sealX + 24, sealY - 20);
+    ctx.stroke();
+
+    // 発行者
+    ctx.fillStyle = oceanDim;
+    ctx.font = "16px " + fontFamily;
+    ctx.fillText("JS学習アプリ", w / 2, h - 60);
+  }
+
+  render();
+})();
+</script>
+
+</body>
+</html>
