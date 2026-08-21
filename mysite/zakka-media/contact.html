@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>お問い合わせ | プチプラくらし手帖</title>
+  <meta name="description" content="「プチプラくらし手帖」へのお問い合わせフォームです。読者の方・企業の方でフォームを分けています。" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@400;500;700&family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="assets/style.css" />
+</head>
+<body>
+
+  <!-- ヘッダー -->
+  <header>
+    <div class="wrap header-inner">
+      <a href="index.html" class="logo">プチプラ<span>くらし</span>手帖</a>
+      <nav class="nav-links">
+        <a href="index.html#pickup">注目記事</a>
+        <a href="index.html#articles">記事一覧</a>
+        <a href="index.html#ranking">ランキング</a>
+        <a href="index.html#instagram">Instagram</a>
+        <a href="contact.html">お問い合わせ</a>
+      </nav>
+      <div class="header-actions">
+        <div class="icon-btn" title="検索">🔍</div>
+        <div class="icon-btn" title="メニュー">☰</div>
+      </div>
+    </div>
+  </header>
+
+  <div class="wrap">
+    <!-- パンくずリスト -->
+    <nav class="breadcrumb" aria-label="パンくず">
+      <a href="index.html">ホーム</a>
+      <span class="sep">/</span>
+      <span>お問い合わせ</span>
+    </nav>
+
+    <div class="article-header">
+      <h1 class="article-title">お問い合わせ</h1>
+    </div>
+
+    <article class="article-body">
+      <p>
+        記事の感想やご指摘、タイアップ・PRのご相談など、お気軽にお問い合わせください。
+        「読者の方」「企業の方」でフォームが分かれていますので、あてはまるタブを選んでご利用ください。
+      </p>
+    </article>
+
+    <div class="contact-form">
+      <!-- タブ切り替え -->
+      <div class="tag-filter" id="contact-tabs">
+        <button type="button" data-target="reader" class="active">読者の方</button>
+        <button type="button" data-target="business">企業の方</button>
+      </div>
+
+      <!-- 読者の方向けフォーム -->
+      <form class="form-panel" id="panel-reader" novalidate>
+        <div class="form-group">
+          <label for="reader-name">お名前<span class="required">必須</span></label>
+          <input type="text" id="reader-name" name="name" required />
+        </div>
+        <div class="form-group">
+          <label for="reader-email">メールアドレス<span class="required">必須</span></label>
+          <input type="email" id="reader-email" name="email" required />
+        </div>
+        <div class="form-group">
+          <label for="reader-type">お問い合わせ種別</label>
+          <select id="reader-type" name="type">
+            <option value="article">記事の内容について</option>
+            <option value="correction">掲載間違いのご指摘</option>
+            <option value="other">その他</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="reader-message">お問い合わせ内容<span class="required">必須</span></label>
+          <textarea id="reader-message" name="message" required></textarea>
+        </div>
+        <button type="submit" class="btn btn-primary">送信する</button>
+        <p class="form-note">※ このフォームはデザイン確認用のダミーです。実際の送信は行われません。</p>
+      </form>
+
+      <!-- 企業の方向けフォーム -->
+      <form class="form-panel" id="panel-business" hidden novalidate>
+        <div class="form-group">
+          <label for="business-company">会社名<span class="required">必須</span></label>
+          <input type="text" id="business-company" name="company" required />
+        </div>
+        <div class="form-group">
+          <label for="business-name">ご担当者名<span class="required">必須</span></label>
+          <input type="text" id="business-name" name="name" required />
+        </div>
+        <div class="form-group">
+          <label for="business-email">メールアドレス<span class="required">必須</span></label>
+          <input type="email" id="business-email" name="email" required />
+        </div>
+        <div class="form-group">
+          <label for="business-tel">電話番号（任意）</label>
+          <input type="tel" id="business-tel" name="tel" />
+        </div>
+        <div class="form-group">
+          <label for="business-menu">ご相談内容</label>
+          <select id="business-menu" name="menu">
+            <option value="article">記事タイアップ</option>
+            <option value="instagram">Instagram投稿タイアップ</option>
+            <option value="set">記事＋SNS セットプラン</option>
+            <option value="other">その他・まずは相談したい</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="business-budget">ご予算感（任意）</label>
+          <input type="text" id="business-budget" name="budget" placeholder="例：10万円〜30万円" />
+        </div>
+        <div class="form-group">
+          <label for="business-message">メッセージ<span class="required">必須</span></label>
+          <textarea id="business-message" name="message" required placeholder="タイアップの目的や商品について、分かる範囲でご記入ください。"></textarea>
+        </div>
+        <button type="submit" class="btn btn-primary">送信する</button>
+        <p class="form-note">※ このフォームはデザイン確認用のダミーです。実際の送信は行われません。</p>
+      </form>
+
+      <!-- 送信完了メッセージ -->
+      <div class="form-success" id="form-success" hidden>
+        <div class="icon">✅</div>
+        <h3>送信しました</h3>
+        <p>お問い合わせいただきありがとうございます。内容を確認の上、担当者より2〜3営業日以内にご連絡いたします。</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- フッター -->
+  <footer>
+    <div class="footer-sns">
+      <a href="#" class="icon-btn" title="Instagram">📷</a>
+      <a href="#" class="icon-btn" title="X">✕</a>
+      <a href="#" class="icon-btn" title="LINE">💬</a>
+    </div>
+    <div class="footer-links">
+      <a href="about.html">サイトについて</a>
+      <a href="privacy-policy.html">プライバシーポリシー</a>
+      <a href="terms.html">利用規約</a>
+      <a href="for-business.html">企業の方へ</a>
+      <a href="company.html">運営会社</a>
+    </div>
+    <p>&copy; 2026 プチプラくらし手帖</p>
+  </footer>
+
+  <script>
+    // ── タブ切り替え ──
+    const tabButtons = document.querySelectorAll('#contact-tabs button');
+    const panels = {
+      reader: document.getElementById('panel-reader'),
+      business: document.getElementById('panel-business'),
+    };
+    const successMessage = document.getElementById('form-success');
+
+    const activateTab = (target) => {
+      tabButtons.forEach((b) => b.classList.toggle('active', b.dataset.target === target));
+      Object.entries(panels).forEach(([key, panel]) => {
+        panel.hidden = key !== target;
+      });
+      successMessage.hidden = true;
+    };
+
+    tabButtons.forEach((button) => {
+      button.addEventListener('click', () => activateTab(button.dataset.target));
+    });
+
+    // URLの ?type=business を見て、企業タブを初期表示にする
+    if (new URLSearchParams(location.search).get('type') === 'business') {
+      activateTab('business');
+    }
+
+    // ── 送信ダミー動作（実際の送信は行わない） ──
+    Object.values(panels).forEach((form) => {
+      form.addEventListener('submit', (event) => {
+        event.preventDefault();
+        form.hidden = true;
+        successMessage.hidden = false;
+      });
+    });
+  </script>
+
+</body>
+</html>

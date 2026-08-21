@@ -1,0 +1,1357 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>24時間スケジュール</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=M+PLUS+1p:wght@400;700;800&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #f7f7fb;
+    --surface: #ffffff;
+    --surface2: #f0f0f8;
+    --accent: #7c4dff;
+    --accent2: #e040fb;
+    --text: #1a1a2e;
+    --text-dim: #888;
+    --border: #dde0f0;
+    --radius: 12px;
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'M PLUS 1p', sans-serif;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 24px 16px 48px;
+  }
+
+  h1 {
+    font-size: 1.3rem;
+    font-weight: 800;
+    color: #fff;
+    background: linear-gradient(90deg, #7c4dff, #e040fb);
+    padding: 8px 28px;
+    border-radius: 4px;
+    margin-bottom: 4px;
+    letter-spacing: 0.08em;
+    box-shadow: 0 3px 10px rgba(124,77,255,0.3);
+  }
+
+  .subtitle {
+    color: var(--text-dim);
+    font-size: 0.8rem;
+    margin-bottom: 24px;
+  }
+
+  .layout {
+    display: flex;
+    gap: 28px;
+    align-items: flex-start;
+    flex-wrap: wrap;
+    justify-content: center;
+    width: 100%;
+    max-width: 900px;
+  }
+
+  /* ---- チャートエリア ---- */
+  .chart-wrap {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    min-width: 0;
+  }
+
+  #chart-svg {
+    filter: drop-shadow(0 4px 16px rgba(124,77,255,0.12));
+    cursor: default;
+    max-width: 100%;
+    height: auto;
+    touch-action: none;
+  }
+
+  .chart-title-input {
+    background: transparent;
+    border: none;
+    border-bottom: 2px solid var(--border);
+    color: var(--text);
+    font-size: 1.1rem;
+    font-weight: 600;
+    text-align: center;
+    width: min(280px, 90vw);
+    padding: 4px 0;
+    outline: none;
+    transition: border-color 0.15s;
+  }
+  .chart-title-input:focus { border-color: var(--accent); }
+  .chart-title-input::placeholder { color: var(--text-dim); }
+
+  /* ---- ラベル編集コントロール ---- */
+  #labelControls {
+    display: none;
+    align-items: center;
+    gap: 8px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 24px;
+    padding: 6px 14px;
+    font-size: 0.8rem;
+    color: var(--text-dim);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+    flex-wrap: wrap;
+    justify-content: center;
+    max-width: 340px;
+  }
+  #labelControls.visible { display: flex; }
+  #labelControls strong { color: var(--text); }
+  .lbl-ctrl-btn {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    color: var(--text);
+    cursor: pointer;
+    width: 26px;
+    height: 26px;
+    font-size: 1rem;
+    line-height: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.15s;
+  }
+  .lbl-ctrl-btn:hover { background: var(--border); }
+  #lblResetBtn {
+    background: none;
+    border: none;
+    color: var(--text-dim);
+    cursor: pointer;
+    font-size: 0.75rem;
+    text-decoration: underline;
+    padding: 0 2px;
+  }
+  #lblResetBtn:hover { color: var(--accent); }
+
+  .dl-btn {
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    color: #fff;
+    border: none;
+    border-radius: 24px;
+    padding: 11px 28px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    letter-spacing: 0.05em;
+    transition: opacity 0.2s, transform 0.1s;
+    box-shadow: 0 4px 12px rgba(124,77,255,0.25);
+  }
+  .dl-btn:hover { opacity: 0.88; transform: translateY(-1px); }
+  .dl-btn:active { transform: translateY(0); }
+
+  /* ---- コントロールエリア ---- */
+  .controls {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px;
+    width: min(340px, 100%);
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+  }
+
+  .controls h2 {
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: var(--text-dim);
+    font-weight: 600;
+  }
+
+  .entry-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    max-height: 400px;
+    overflow-y: auto;
+    padding-right: 4px;
+  }
+  .entry-list::-webkit-scrollbar { width: 4px; }
+  .entry-list::-webkit-scrollbar-track { background: transparent; }
+  .entry-list::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+  .entry-card {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .entry-top {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .color-dot {
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    cursor: pointer;
+    border: 2px solid rgba(0,0,0,0.08);
+    transition: transform 0.15s;
+  }
+  .color-dot:hover { transform: scale(1.2); }
+
+  .entry-name {
+    flex: 1;
+    background: transparent;
+    border: none;
+    color: var(--text);
+    font-size: 0.9rem;
+    font-weight: 600;
+    outline: none;
+    min-width: 0;
+  }
+  .entry-name::placeholder { color: var(--text-dim); }
+
+  .del-btn {
+    background: none;
+    border: none;
+    color: var(--text-dim);
+    cursor: pointer;
+    font-size: 1rem;
+    line-height: 1;
+    padding: 2px 4px;
+    border-radius: 4px;
+    transition: background 0.15s, color 0.15s;
+  }
+  .del-btn:hover { color: #e53935; background: #fde8e8; }
+
+  .entry-times {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.8rem;
+    color: var(--text-dim);
+  }
+
+  .time-input {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    color: var(--text);
+    font-size: 0.8rem;
+    padding: 3px 6px;
+    width: 82px;
+    outline: none;
+    transition: border-color 0.15s;
+  }
+  .time-input:focus { border-color: var(--accent); }
+
+  .color-input-hidden {
+    position: absolute;
+    opacity: 0;
+    pointer-events: none;
+    width: 0;
+    height: 0;
+  }
+
+  .add-btn {
+    background: transparent;
+    border: 1.5px dashed var(--border);
+    border-radius: 8px;
+    color: var(--text-dim);
+    cursor: pointer;
+    padding: 10px;
+    font-size: 0.85rem;
+    transition: border-color 0.15s, color 0.15s, background 0.15s;
+    text-align: center;
+  }
+  .add-btn:hover { border-color: var(--accent); color: var(--accent); background: #f0ebff; }
+
+  .history-btns {
+    display: flex;
+    gap: 8px;
+  }
+  .history-btn {
+    flex: 1;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text-dim);
+    cursor: pointer;
+    padding: 8px;
+    font-size: 0.82rem;
+    font-family: 'M PLUS 1p', sans-serif;
+    transition: background 0.15s, color 0.15s;
+    text-align: center;
+  }
+  .history-btn:hover:not(:disabled) { background: var(--border); color: var(--text); }
+  .history-btn:disabled { opacity: 0.35; cursor: default; }
+
+  .legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px 14px;
+    justify-content: center;
+    max-width: 340px;
+  }
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 0.75rem;
+    color: var(--text-dim);
+  }
+  .legend-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  /* ツールチップ */
+  #tooltip {
+    position: fixed;
+    background: rgba(255,255,255,0.97);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 8px 12px;
+    font-size: 0.8rem;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.15s;
+    z-index: 100;
+    white-space: nowrap;
+    color: var(--text);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  }
+
+  /* ---- 画像プレビュー ---- */
+  #previewSection {
+    width: 100%;
+    max-width: 900px;
+    margin-top: 32px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    background: var(--surface);
+    border: 2px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+  }
+
+  #previewSection h3 {
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: var(--text-dim);
+    font-weight: 600;
+  }
+
+  #previewCanvas {
+    width: 100%;
+    height: auto;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+  }
+
+  /* ---- スマホ対応 ---- */
+  @media (max-width: 600px) {
+    h1 { font-size: 1.2rem; }
+    .layout { flex-direction: column; align-items: center; gap: 20px; }
+    #chart-svg { width: min(300px, 88vw) !important; height: min(300px, 88vw) !important; }
+    .controls { width: 100%; max-width: 420px; }
+    .entry-list { max-height: 300px; }
+  }
+</style>
+</head>
+<body>
+
+<h1>📅 24H スケジュール</h1>
+<p class="subtitle">あなたの1日を可視化</p>
+
+<div class="layout">
+  <div class="chart-wrap">
+    <input class="chart-title-input" id="chartTitle" type="text" placeholder="タイトルを入力（例：natsumi の1日）" maxlength="40">
+    <!-- viewBox を広げてリング外にも自由配置できるようにする -->
+    <svg id="chart-svg" width="380" height="380" viewBox="-190 -190 380 380" overflow="visible"></svg>
+    <div id="labelControls">
+      <strong id="lblName"></strong>
+      <span>文字サイズ</span>
+      <button class="lbl-ctrl-btn" id="lblMinus">−</button>
+      <span id="lblSizeVal" style="min-width:24px;text-align:center;color:var(--text)"></span>
+      <button class="lbl-ctrl-btn" id="lblPlus">＋</button>
+      <button id="lblResetBtn">リセット</button>
+    </div>
+    <div class="legend" id="legend"></div>
+  </div>
+
+  <div class="controls">
+    <h2>スケジュール編集</h2>
+    <div class="entry-list" id="entryList"></div>
+    <button class="add-btn" id="addBtn">＋ 活動を追加</button>
+    <div class="history-btns">
+      <button class="history-btn" id="undoBtn">↩ 元に戻す</button>
+      <button class="history-btn" id="resetBtn">🗑 全リセット</button>
+    </div>
+  </div>
+</div>
+
+<button class="dl-btn" id="dlBtn" style="margin-top:24px">📥 画像としてダウンロード</button>
+
+<div id="previewSection">
+  <h3>出力プレビュー</h3>
+  <canvas id="previewCanvas"></canvas>
+</div>
+
+<div id="tooltip"></div>
+<input type="color" class="color-input-hidden" id="colorPicker">
+
+<script>
+// ---- 履歴（undo） ----
+const MAX_HISTORY = 50;
+let history = [];
+
+function pushHistory() {
+  history.push(JSON.stringify(entries));
+  if (history.length > MAX_HISTORY) history.shift();
+  updateHistoryBtns();
+}
+
+function updateHistoryBtns() {
+  document.getElementById('undoBtn').disabled = history.length === 0;
+}
+
+// ---- デフォルトデータ ----
+const DEFAULT_ENTRIES = [
+  { id: 1, name: '睡眠',     color: '#90caf9', start: '00:00', end: '07:00', labelDx: 0, labelDy: 0, labelSize: null },
+  { id: 2, name: '食事・休憩', color: '#a5d6a7', start: '07:00', end: '08:00', labelDx: 0, labelDy: 0, labelSize: null },
+  { id: 3, name: 'ゲーム',   color: '#ffcc80', start: '08:00', end: '15:00', labelDx: 0, labelDy: 0, labelSize: null },
+  { id: 4, name: '夕食',     color: '#f48fb1', start: '15:00', end: '16:00', labelDx: 0, labelDy: 0, labelSize: null },
+  { id: 5, name: 'まったり', color: '#80cbc4', start: '16:00', end: '00:00', labelDx: 0, labelDy: 0, labelSize: null },
+];
+
+// ---- データ ----
+// labelDx/Dy: デフォルト位置からのオフセット（SVG座標系）
+// labelSize: カスタムフォントサイズ（null = 自動計算）
+let entries = [
+  { id: 1, name: '睡眠',     color: '#90caf9', start: '00:00', end: '07:00', labelDx: 0, labelDy: 0, labelSize: null },
+  { id: 2, name: '食事・休憩', color: '#a5d6a7', start: '07:00', end: '08:00', labelDx: 0, labelDy: 0, labelSize: null },
+  { id: 3, name: 'ゲーム',   color: '#ffcc80', start: '08:00', end: '15:00', labelDx: 0, labelDy: 0, labelSize: null },
+  { id: 4, name: '夕食',     color: '#f48fb1', start: '15:00', end: '16:00', labelDx: 0, labelDy: 0, labelSize: null },
+  { id: 5, name: 'まったり', color: '#80cbc4', start: '16:00', end: '00:00', labelDx: 0, labelDy: 0, labelSize: null },
+];
+let nextId = 6;
+
+// ---- SVGユーティリティ ----
+const SVG_NS = 'http://www.w3.org/2000/svg';
+const R_OUTER = 140;
+const R_INNER = 38;
+const R_LABEL = 158; // viewBox を -170〜170 に広げたので余裕あり
+
+function timeToAngle(timeStr) {
+  const [h, m] = timeStr.split(':').map(Number);
+  return ((h * 60 + m) / 1440) * 360 - 90;
+}
+
+function polarToXY(angleDeg, r) {
+  const rad = angleDeg * Math.PI / 180;
+  return { x: r * Math.cos(rad), y: r * Math.sin(rad) };
+}
+
+function describeArc(startAngle, sweep, rOuter, rInner) {
+  const endAngle = startAngle + sweep;
+  const large = sweep > 180 ? 1 : 0;
+  const s1 = polarToXY(startAngle, rOuter);
+  const e1 = polarToXY(endAngle,   rOuter);
+  const s2 = polarToXY(endAngle,   rInner);
+  const e2 = polarToXY(startAngle, rInner);
+  return [
+    `M ${s1.x} ${s1.y}`,
+    `A ${rOuter} ${rOuter} 0 ${large} 1 ${e1.x} ${e1.y}`,
+    `L ${s2.x} ${s2.y}`,
+    `A ${rInner} ${rInner} 0 ${large} 0 ${e2.x} ${e2.y}`,
+    'Z'
+  ].join(' ');
+}
+
+// SVGスクリーン座標 → SVG内部座標
+function screenToSVG(e) {
+  const svg = document.getElementById('chart-svg');
+  const pt  = svg.createSVGPoint();
+  const src = e.touches ? e.touches[0] : e;
+  pt.x = src.clientX;
+  pt.y = src.clientY;
+  return pt.matrixTransform(svg.getScreenCTM().inverse());
+}
+
+// ---- 時間ドラッグ状態 ----
+let timeDragState = null; // { entry, prevEntry }
+
+function angleToTime(angleDeg) {
+  // SVGのatan2角度(0=右)→時刻に変換、15分スナップ
+  const normalized = ((angleDeg + 90) % 360 + 360) % 360;
+  const totalMin   = Math.round((normalized / 360 * 1440) / 15) * 15;
+  const h = Math.floor(totalMin / 60) % 24;
+  const m = totalMin % 60;
+  return `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}`;
+}
+
+// ---- ラベル選択・ドラッグ状態 ----
+let selectedId  = null;
+let dragState   = null; // { entry, startSVG, startDx, startDy }
+
+function selectLabel(entry) {
+  selectedId = entry ? entry.id : null;
+  updateLabelControls();
+  renderChart();
+}
+
+function updateLabelControls() {
+  const ctrl = document.getElementById('labelControls');
+  if (selectedId === null) {
+    ctrl.classList.remove('visible');
+    return;
+  }
+  const entry = entries.find(e => e.id === selectedId);
+  if (!entry) { ctrl.classList.remove('visible'); return; }
+
+  ctrl.classList.add('visible');
+  document.getElementById('lblName').textContent = entry.name || '(未入力)';
+  const autoSize = calcAutoFontSize(entry);
+  const sz = entry.labelSize ?? autoSize;
+  document.getElementById('lblSizeVal').textContent = sz.toFixed(1);
+}
+
+const MIN_LABEL_SIZE = 5; // これ未満なら非表示
+
+function calcAutoFontSize(entry) {
+  const startA = timeToAngle(entry.start);
+  let endA = timeToAngle(entry.end);
+  if (entry.end === '00:00' || entry.end === '24:00') endA = timeToAngle('00:00') + 360;
+  let sweep = endA - startA;
+  if (sweep <= 0) sweep += 360;
+  const midR   = (R_OUTER + R_INNER) / 2;
+  const arcLen = midR * (sweep * Math.PI / 180);
+  const ringW  = R_OUTER - R_INNER;
+  return calcFontSizeForLines(arcLen, ringW, [entry.name || ' '], 1);
+}
+
+// 文字列の概算幅（全角=1.0em、半角=0.58em）
+function approxTextW(str) {
+  return str.split('').reduce((s, c) => s + (c.charCodeAt(0) > 0xFF ? 1.0 : 0.58), 0);
+}
+
+// n行分のフォントサイズ計算
+function calcFontSizeForLines(arcLen, ringW, lines, n) {
+  const maxW = Math.max(...lines.map(approxTextW));
+  const maxByArc  = (arcLen * 0.85) / maxW;
+  const maxByRing = (ringW * 0.60) / (n + (n - 1) * 0.3); // 行間0.3em込み
+  return Math.min(maxByArc, maxByRing, 14);
+}
+
+// 1行の最大文字数
+const MAX_LINE_CHARS = 15;
+
+// テキストを自然な位置で2分割する
+function splitText(text) {
+  if (text.length <= 1) return [text];
+  const mid = Math.ceil(text.length / 2);
+  const splitChars = '・、。';
+  // 中央付近の区切り文字を優先
+  for (let i = mid; i >= 1; i--) {
+    if (splitChars.includes(text[i - 1])) return [text.slice(0, i), text.slice(i)];
+  }
+  for (let i = mid; i < text.length; i++) {
+    if (splitChars.includes(text[i - 1])) return [text.slice(0, i), text.slice(i)];
+  }
+  return [text.slice(0, mid), text.slice(mid)];
+}
+
+// 8文字/行で折り返し・はみ出しは … で省略（最大2行）
+function truncateToLines(text) {
+  if (text.length <= MAX_LINE_CHARS) return [text];
+  const line1 = text.slice(0, MAX_LINE_CHARS);
+  const rest  = text.slice(MAX_LINE_CHARS);
+  if (rest.length <= MAX_LINE_CHARS) return [line1, rest];
+  return [line1, rest.slice(0, MAX_LINE_CHARS - 1) + '…'];
+}
+
+// ラベルの表示情報（fontSize + lines[]）を返す
+function getLabelInfo(entry) {
+  const startA = timeToAngle(entry.start);
+  let endA = timeToAngle(entry.end);
+  if (entry.end === '00:00' || entry.end === '24:00') endA = timeToAngle('00:00') + 360;
+  let sweep = endA - startA;
+  if (sweep <= 0) sweep += 360;
+  const midR   = (R_OUTER + R_INNER) / 2;
+  const arcLen = midR * (sweep * Math.PI / 180);
+  const ringW  = R_OUTER - R_INNER;
+  const name   = entry.name || '';
+  if (!name) return null;
+
+  // MAX_LINE_CHARS以内なら1行で試みる
+  if (name.length <= MAX_LINE_CHARS) {
+    const size1 = calcFontSizeForLines(arcLen, ringW, [name], 1);
+    if (size1 >= MIN_LABEL_SIZE) return { fontSize: size1, lines: [name] };
+  }
+
+  // MAX_LINE_CHARS*2以内なら2行分割を試みる
+  if (name.length <= MAX_LINE_CHARS * 2) {
+    const split = splitText(name);
+    if (split.length === 2) {
+      const size2 = calcFontSizeForLines(arcLen, ringW, split, 2);
+      if (size2 >= MIN_LABEL_SIZE) return { fontSize: size2, lines: split };
+    }
+  }
+
+  // 長文省略：15文字/行で切り捨て … を付けて強制表示
+  const truncated = truncateToLines(name);
+  const sizeT = calcFontSizeForLines(arcLen, ringW, truncated, truncated.length);
+  return { fontSize: Math.max(sizeT, MIN_LABEL_SIZE), lines: truncated };
+}
+
+// 文字列を指定文字数で折り返す
+function wrapText(text, charsPerLine) {
+  if (charsPerLine <= 0) return [text];
+  const lines = [];
+  for (let i = 0; i < text.length; i += charsPerLine) {
+    lines.push(text.slice(i, i + charsPerLine));
+  }
+  return lines;
+}
+
+// ---- チャート描画 ----
+const svg = document.getElementById('chart-svg');
+const tooltip = document.getElementById('tooltip');
+
+function renderChart() {
+  svg.innerHTML = '';
+
+  // 背景円
+  const bgCircle = document.createElementNS(SVG_NS, 'circle');
+  bgCircle.setAttribute('r', R_OUTER);
+  bgCircle.setAttribute('fill', '#ffffff');
+  svg.appendChild(bgCircle);
+
+  // パス1: セグメントのみ描画（ラベルより先に全セグメントを追加）
+  entries.forEach(entry => {
+    const startA = timeToAngle(entry.start);
+    let endA = timeToAngle(entry.end);
+    if (entry.end === '00:00' || entry.end === '24:00') endA = timeToAngle('00:00') + 360;
+    let sweep = endA - startA;
+    if (sweep <= 0) sweep += 360;
+    if (sweep <= 0) return;
+
+    const path = document.createElementNS(SVG_NS, 'path');
+    path.setAttribute('d', describeArc(startA, sweep, R_OUTER, R_INNER));
+    path.setAttribute('fill', entry.color);
+    path.setAttribute('stroke', '#f7f7fb');
+    path.setAttribute('stroke-width', '1.5');
+    path.style.transition = 'filter 0.15s';
+
+    path.addEventListener('mouseenter', (e) => {
+      if (!dragState) { path.style.filter = 'brightness(0.92)'; showTooltip(e, entry); }
+    });
+    path.addEventListener('mousemove', moveTooltip);
+    path.addEventListener('mouseleave', () => { path.style.filter = ''; hideTooltip(); });
+
+    svg.appendChild(path);
+  });
+
+  // 目盛り線
+  for (let h = 0; h < 24; h++) {
+    const angle = (h / 24) * 360 - 90;
+    const isMajor = h % 6 === 0;
+    const p1 = polarToXY(angle, isMajor ? R_INNER : R_OUTER - 10);
+    const p2 = polarToXY(angle, R_OUTER);
+    const line = document.createElementNS(SVG_NS, 'line');
+    line.setAttribute('x1', p1.x); line.setAttribute('y1', p1.y);
+    line.setAttribute('x2', p2.x); line.setAttribute('y2', p2.y);
+    line.setAttribute('stroke', isMajor ? 'rgba(0,0,0,0.18)' : 'rgba(0,0,0,0.07)');
+    line.setAttribute('stroke-width', isMajor ? '1.5' : '0.8');
+    svg.appendChild(line);
+  }
+
+  // 内円（ラベルより先に描いてラベルが内円に隠れないように）
+  const innerCircle = document.createElementNS(SVG_NS, 'circle');
+  innerCircle.setAttribute('r', R_INNER);
+  innerCircle.setAttribute('fill', '#ffffff');
+  innerCircle.setAttribute('stroke', '#ededf7');
+  innerCircle.setAttribute('stroke-width', '1');
+  svg.appendChild(innerCircle);
+
+  const centerText = document.createElementNS(SVG_NS, 'text');
+  centerText.setAttribute('text-anchor', 'middle');
+  centerText.setAttribute('dominant-baseline', 'middle');
+  centerText.setAttribute('fill', '#bbb');
+  centerText.setAttribute('font-size', '12');
+  centerText.setAttribute('font-family', "'M PLUS 1p', sans-serif");
+  centerText.textContent = '24h';
+  svg.appendChild(centerText);
+
+  // パス2: ラベルを全セグメント・内円の上に描画
+  entries.forEach(entry => {
+    const startA = timeToAngle(entry.start);
+    let endA = timeToAngle(entry.end);
+    if (entry.end === '00:00' || entry.end === '24:00') endA = timeToAngle('00:00') + 360;
+    let sweep = endA - startA;
+    if (sweep <= 0) sweep += 360;
+    if (sweep <= 0) return;
+
+    // ---- セグメント内ラベル ----
+    if (!entry.name) return;
+
+    const midAngle = startA + sweep / 2;
+    const midR     = (R_OUTER + R_INNER) / 2;
+    const defPos   = polarToXY(midAngle, midR);
+    const posX     = defPos.x + entry.labelDx;
+    const posY     = defPos.y + entry.labelDy;
+
+    // サイズ・行を決定（手動設定があれば行数だけ getLabelInfo から流用）
+    let labelLines, fontSize;
+    if (entry.labelSize !== null) {
+      const info = getLabelInfo(entry);
+      labelLines = info ? info.lines : [entry.name];
+      fontSize   = entry.labelSize;
+    } else {
+      const info = getLabelInfo(entry);
+      if (!info) return; // 非表示
+      labelLines = info.lines;
+      fontSize   = info.fontSize;
+    }
+
+    const isSelected = selectedId === entry.id;
+    const lineH      = fontSize * 1.3;
+
+    // ラベルグループ（回転なし・どこでも配置可）
+    const g = document.createElementNS(SVG_NS, 'g');
+    g.setAttribute('cursor', 'move');
+
+    const lbl = document.createElementNS(SVG_NS, 'text');
+    lbl.setAttribute('text-anchor', 'middle');
+    lbl.setAttribute('font-size', fontSize.toFixed(1));
+    lbl.setAttribute('font-family', "'M PLUS 1p', sans-serif");
+    lbl.setAttribute('font-weight', '600');
+    lbl.setAttribute('fill', 'rgba(0,0,0,0.68)');
+    lbl.setAttribute('pointer-events', 'none');
+
+    labelLines.forEach((line, li) => {
+      const span = document.createElementNS(SVG_NS, 'tspan');
+      span.setAttribute('x', posX);
+      span.setAttribute('y', posY + (li - (labelLines.length - 1) / 2) * lineH);
+      span.setAttribute('dominant-baseline', 'middle');
+      span.textContent = line;
+      lbl.appendChild(span);
+    });
+    g.appendChild(lbl);
+
+    // 選択時 — Photoshop 風ハンドル
+    if (isSelected) {
+      const hw = fontSize * entry.name.length * 0.62 / 2 + 4; // 横幅の半分
+      const hh = fontSize / 2 + 3;                             // 縦幅の半分
+      const x0 = posX - hw, y0 = posY - hh;
+      const x1 = posX + hw, y1 = posY + hh;
+
+      // 選択枠
+      const box = document.createElementNS(SVG_NS, 'rect');
+      box.setAttribute('x', x0); box.setAttribute('y', y0);
+      box.setAttribute('width',  hw * 2); box.setAttribute('height', hh * 2);
+      box.setAttribute('fill', 'rgba(124,77,255,0.08)');
+      box.setAttribute('stroke', '#7c4dff');
+      box.setAttribute('stroke-width', '0.8');
+      box.setAttribute('stroke-dasharray', '3,2');
+      box.setAttribute('pointer-events', 'none');
+      g.appendChild(box);
+
+      // 四隅ハンドル（見た目のみ）
+      [[x0,y0],[x1,y0],[x0,y1],[x1,y1]].forEach(([cx,cy]) => {
+        const h = document.createElementNS(SVG_NS, 'rect');
+        h.setAttribute('x', cx - 2.5); h.setAttribute('y', cy - 2.5);
+        h.setAttribute('width', 5); h.setAttribute('height', 5);
+        h.setAttribute('fill', '#fff');
+        h.setAttribute('stroke', '#7c4dff');
+        h.setAttribute('stroke-width', '1');
+        h.setAttribute('pointer-events', 'none');
+        g.appendChild(h);
+      });
+
+      // スケールハンドル（右下 — ドラッグでサイズ変更）
+      const sh = document.createElementNS(SVG_NS, 'rect');
+      sh.setAttribute('x', x1 - 4); sh.setAttribute('y', y1 - 4);
+      sh.setAttribute('width', 8); sh.setAttribute('height', 8);
+      sh.setAttribute('fill', '#7c4dff');
+      sh.setAttribute('stroke', '#fff');
+      sh.setAttribute('stroke-width', '1');
+      sh.setAttribute('cursor', 'se-resize');
+      sh.setAttribute('rx', '1');
+
+      const onScaleStart = (e) => {
+        e.preventDefault(); e.stopPropagation();
+        pushHistory();
+        const svgP = screenToSVG(e);
+        // 右下ハンドルから中心までの距離を基準にスケール
+        dragState = {
+          entry, mode: 'scale',
+          startSVG: svgP,
+          startSize: fontSize,
+          centerX: posX, centerY: posY,
+        };
+      };
+      sh.addEventListener('mousedown',  onScaleStart);
+      sh.addEventListener('touchstart', onScaleStart, { passive: false });
+      g.appendChild(sh);
+    }
+
+    // 本体ドラッグ開始（dragState → renderChart の順を守る）
+    const onDragStart = (e) => {
+      if (e.target.getAttribute('cursor') === 'se-resize') return; // スケールハンドルは別処理
+      e.preventDefault(); e.stopPropagation();
+      const svgP = screenToSVG(e);
+      pushHistory();
+      selectedId = entry.id;
+      dragState  = { entry, mode: 'move', startSVG: svgP, startDx: entry.labelDx, startDy: entry.labelDy };
+      renderChart();
+      updateLabelControls();
+    };
+    g.addEventListener('mousedown',  onDragStart);
+    g.addEventListener('touchstart', onDragStart, { passive: false });
+
+    svg.appendChild(g);
+  });
+
+  // ---- 境界ドラッグハンドル（全ユニーク境界点） ----
+  // start/end 両方を収集して重複を除去
+  const boundaryMap = new Map(); // timeStr → { starts: [], ends: [] }
+  entries.forEach(e => {
+    if (!boundaryMap.has(e.start)) boundaryMap.set(e.start, { starts: [], ends: [] });
+    if (!boundaryMap.has(e.end))   boundaryMap.set(e.end,   { starts: [], ends: [] });
+    boundaryMap.get(e.start).starts.push(e);
+    boundaryMap.get(e.end).ends.push(e);
+  });
+
+  boundaryMap.forEach(({ starts, ends }, timeStr) => {
+    const angle = timeToAngle(timeStr);
+    const pos   = polarToXY(angle, R_OUTER);
+
+    const handle = document.createElementNS(SVG_NS, 'circle');
+    handle.setAttribute('cx', pos.x);
+    handle.setAttribute('cy', pos.y);
+    handle.setAttribute('r', '7');
+    handle.setAttribute('fill', '#fff');
+    handle.setAttribute('stroke', '#7c4dff');
+    handle.setAttribute('stroke-width', '2.5');
+    handle.setAttribute('cursor', 'grab');
+
+    handle.addEventListener('mouseenter', () => handle.setAttribute('r', '9'));
+    handle.addEventListener('mouseleave', () => { if (!timeDragState) handle.setAttribute('r', '7'); });
+
+    const onTimeDragStart = (e) => {
+      e.preventDefault(); e.stopPropagation();
+      pushHistory();
+      // このハンドルに紐づく全 start/end エントリを記憶
+      timeDragState = { starts, ends };
+      handle.setAttribute('cursor', 'grabbing');
+    };
+    handle.addEventListener('mousedown',  onTimeDragStart);
+    handle.addEventListener('touchstart', onTimeDragStart, { passive: false });
+
+    svg.appendChild(handle);
+  });
+
+  // 時刻ラベル（0, 6, 12, 18）— viewBox 拡張で切れない
+  [0, 6, 12, 18].forEach(h => {
+    const angle = (h / 24) * 360 - 90;
+    const pos = polarToXY(angle, R_LABEL);
+    const text = document.createElementNS(SVG_NS, 'text');
+    text.setAttribute('x', pos.x);
+    text.setAttribute('y', pos.y);
+    text.setAttribute('text-anchor', 'middle');
+    text.setAttribute('dominant-baseline', 'middle');
+    text.setAttribute('fill', '#aaa');
+    text.setAttribute('font-size', '10');
+    text.setAttribute('font-family', "'M PLUS 1p', sans-serif");
+    text.textContent = `${h}h`;
+    svg.appendChild(text);
+  });
+
+  renderLegend();
+  // プレビューを非同期で更新（描画をブロックしない）
+  setTimeout(updatePreview, 0);
+}
+
+// ---- SVGレベルのドラッグ移動（document に委譲してSVG外でも追従） ----
+function onDragMove(e) {
+  if (!dragState) return;
+  e.preventDefault();
+  const svgP = screenToSVG(e);
+
+  if (dragState.mode === 'scale') {
+    // 中心から右下ハンドルへの距離の比でサイズを変える
+    const startDist = Math.hypot(dragState.startSVG.x - dragState.centerX, dragState.startSVG.y - dragState.centerY);
+    const curDist   = Math.hypot(svgP.x - dragState.centerX, svgP.y - dragState.centerY);
+    const ratio     = curDist / Math.max(startDist, 0.1);
+    dragState.entry.labelSize = Math.max(4, Math.min(20, dragState.startSize * ratio));
+  } else {
+    dragState.entry.labelDx = dragState.startDx + svgP.x - dragState.startSVG.x;
+    dragState.entry.labelDy = dragState.startDy + svgP.y - dragState.startSVG.y;
+  }
+  renderChart();
+  updateLabelControls();
+}
+
+function onDragEnd() {
+  dragState = null;
+}
+
+// ---- 時間ドラッグ移動 ----
+function onTimeDragMove(e) {
+  if (!timeDragState) return;
+  e.preventDefault();
+  const svgP     = screenToSVG(e);
+  const angleDeg = Math.atan2(svgP.y, svgP.x) * 180 / Math.PI;
+  const newTime  = angleToTime(angleDeg);
+
+  // このハンドルに紐づく全エントリの start / end を更新
+  timeDragState.starts.forEach(entry => {
+    entry.start = newTime;
+    const inp = document.querySelector(`input[data-id="${entry.id}"][data-t="start"]`);
+    if (inp) inp.value = newTime;
+  });
+  timeDragState.ends.forEach(entry => {
+    entry.end = newTime;
+    const inp = document.querySelector(`input[data-id="${entry.id}"][data-t="end"]`);
+    if (inp) inp.value = newTime;
+  });
+
+  renderChart();
+}
+
+function onTimeDragEnd() { timeDragState = null; }
+
+document.addEventListener('mousemove', (e) => { onTimeDragMove(e); onDragMove(e); });
+document.addEventListener('mouseup',   () =>   { onTimeDragEnd();  onDragEnd();  });
+document.addEventListener('touchmove', (e) => { onTimeDragMove(e); onDragMove(e); }, { passive: false });
+document.addEventListener('touchend',  () =>   { onTimeDragEnd();  onDragEnd();  });
+
+// SVG背景クリックで選択解除
+svg.addEventListener('click', (e) => {
+  if (e.target === svg || e.target.tagName === 'circle' || e.target.tagName === 'line') {
+    selectLabel(null);
+  }
+});
+
+// ---- ラベルコントロールボタン ----
+document.getElementById('lblMinus').addEventListener('click', () => {
+  const entry = entries.find(e => e.id === selectedId);
+  if (!entry) return;
+  pushHistory();
+  const cur = entry.labelSize ?? calcAutoFontSize(entry);
+  entry.labelSize = Math.max(4, parseFloat((cur - 0.5).toFixed(1)));
+  renderChart(); updateLabelControls();
+});
+
+document.getElementById('lblPlus').addEventListener('click', () => {
+  const entry = entries.find(e => e.id === selectedId);
+  if (!entry) return;
+  pushHistory();
+  const cur = entry.labelSize ?? calcAutoFontSize(entry);
+  entry.labelSize = parseFloat((cur + 0.5).toFixed(1));
+  renderChart(); updateLabelControls();
+});
+
+document.getElementById('lblResetBtn').addEventListener('click', () => {
+  const entry = entries.find(e => e.id === selectedId);
+  if (!entry) return;
+  pushHistory();
+  entry.labelDx   = 0;
+  entry.labelDy   = 0;
+  entry.labelSize = null;
+  renderChart(); updateLabelControls();
+});
+
+// ---- undo / 全リセット ----
+document.getElementById('undoBtn').addEventListener('click', () => {
+  if (history.length === 0) return;
+  entries = JSON.parse(history.pop());
+  selectedId = null;
+  updateHistoryBtns();
+  renderList(); renderChart(); updateLabelControls();
+});
+
+document.getElementById('resetBtn').addEventListener('click', () => {
+  if (!confirm('すべてのカテゴリをリセットしますか？')) return;
+  pushHistory();
+  entries   = JSON.parse(JSON.stringify(DEFAULT_ENTRIES));
+  nextId    = DEFAULT_ENTRIES.length + 1;
+  selectedId = null;
+  renderList(); renderChart(); updateLabelControls();
+});
+
+// ---- 凡例 ----
+function renderLegend() {
+  const legend = document.getElementById('legend');
+  legend.innerHTML = '';
+  entries.forEach(e => {
+    const item = document.createElement('div');
+    item.className = 'legend-item';
+    item.innerHTML = `<div class="legend-dot" style="background:${e.color}"></div><span>${e.name || '(未入力)'}</span>`;
+    legend.appendChild(item);
+  });
+}
+
+// ---- ツールチップ ----
+function showTooltip(e, entry) {
+  const end = entry.end === '00:00' ? '24:00' : entry.end;
+  tooltip.innerHTML = `<strong style="color:${entry.color}">${entry.name || '(未入力)'}</strong><br><span style="color:#888">${entry.start} 〜 ${end}</span>`;
+  tooltip.style.opacity = '1';
+  moveTooltip(e);
+}
+function moveTooltip(e) {
+  tooltip.style.left = (e.clientX + 14) + 'px';
+  tooltip.style.top  = (e.clientY - 44) + 'px';
+}
+function hideTooltip() { tooltip.style.opacity = '0'; }
+
+// ---- エントリリスト描画 ----
+function renderList() {
+  const list = document.getElementById('entryList');
+  list.innerHTML = '';
+  entries.forEach(entry => {
+    const card = document.createElement('div');
+    card.className = 'entry-card';
+
+    const top = document.createElement('div');
+    top.className = 'entry-top';
+
+    const dot = document.createElement('div');
+    dot.className = 'color-dot';
+    dot.style.background = entry.color;
+    dot.title = '色を変更';
+    dot.addEventListener('click', () => openColorPicker(entry, dot));
+
+    const nameInput = document.createElement('input');
+    nameInput.className = 'entry-name';
+    nameInput.value = entry.name;
+    nameInput.placeholder = '活動名';
+    let nameTimer;
+    nameInput.addEventListener('input', () => {
+      clearTimeout(nameTimer);
+      nameTimer = setTimeout(pushHistory, 800); // 入力が止まってから保存
+      entry.name = nameInput.value; renderChart(); updateLabelControls();
+    });
+
+    const delBtn = document.createElement('button');
+    delBtn.className = 'del-btn';
+    delBtn.textContent = '✕';
+    delBtn.addEventListener('click', () => {
+      pushHistory();
+      entries = entries.filter(e => e.id !== entry.id);
+      if (selectedId === entry.id) selectLabel(null);
+      renderList(); renderChart();
+    });
+
+    top.append(dot, nameInput, delBtn);
+
+    const times = document.createElement('div');
+    times.className = 'entry-times';
+
+    const startIn = document.createElement('input');
+    startIn.className = 'time-input';
+    startIn.type = 'time';
+    startIn.value = entry.start;
+    startIn.dataset.id = entry.id; startIn.dataset.t = 'start';
+    startIn.addEventListener('change', () => { pushHistory(); entry.start = startIn.value; renderChart(); });
+
+    const arrow = document.createElement('span');
+    arrow.textContent = '→';
+
+    const endIn = document.createElement('input');
+    endIn.className = 'time-input';
+    endIn.type = 'time';
+    endIn.value = entry.end;
+    endIn.dataset.id = entry.id; endIn.dataset.t = 'end';
+    endIn.addEventListener('change', () => { pushHistory(); entry.end = endIn.value; renderChart(); });
+
+    times.append(startIn, arrow, endIn);
+    card.append(top, times);
+    list.appendChild(card);
+  });
+}
+
+// ---- カラーピッカー ----
+const colorPicker = document.getElementById('colorPicker');
+let pickerTarget = null, pickerDot = null;
+
+function openColorPicker(entry, dot) {
+  pickerTarget = entry; pickerDot = dot;
+  colorPicker.value = entry.color;
+  colorPicker.click();
+}
+colorPicker.addEventListener('change', () => { pushHistory(); });
+colorPicker.addEventListener('input', () => {
+  if (!pickerTarget) return;
+  pickerTarget.color = colorPicker.value;
+  pickerDot.style.background = colorPicker.value;
+  renderChart();
+});
+
+// ---- 追加ボタン ----
+document.getElementById('addBtn').addEventListener('click', () => {
+  pushHistory();
+  const lastEnd = entries.length > 0 ? entries[entries.length - 1].end : '12:00';
+  const [lh, lm] = lastEnd.split(':').map(Number);
+  const endH = String((lh + 1) % 24).padStart(2, '0');
+  const autoEnd = `${endH}:${String(lm).padStart(2, '0')}`;
+  entries.push({
+    id: nextId++, name: '',
+    color: `hsl(${Math.random() * 360 | 0},65%,72%)`,
+    start: lastEnd, end: autoEnd,
+    labelDx: 0, labelDy: 0, labelSize: null,
+  });
+  renderList(); renderChart();
+  const cards = document.querySelectorAll('.entry-card');
+  cards[cards.length - 1]?.querySelector('.entry-name').focus();
+});
+
+// ---- ダウンロード ----
+document.getElementById('dlBtn').addEventListener('click', async () => {
+  const title  = document.getElementById('chartTitle').value || '24hスケジュール';
+  const canvas = await buildOutputCanvas();
+  const a = document.createElement('a');
+  a.download = `${title}.png`;
+  a.href = canvas.toDataURL('image/png');
+  a.click();
+});
+
+// ---- 出力画像を描画する共通関数 ----
+async function buildOutputCanvas() {
+  await document.fonts.ready; // M PLUS 1p の読み込みを待つ
+  const title = document.getElementById('chartTitle').value || '24hスケジュール';
+  const W = 1920, H = 1080;
+  const chartDiam = 960;
+  const chartX = 40, chartY = 60;
+
+  const canvas = document.createElement('canvas');
+  canvas.width  = W; canvas.height = H;
+  const ctx = canvas.getContext('2d');
+
+  ctx.fillStyle = '#f7f7fb';
+  ctx.fillRect(0, 0, W, H);
+
+
+  const legendX     = chartX + chartDiam + 60;
+  const legendAreaW = W - legendX - 40;
+
+  ctx.fillStyle = '#1a1a2e';
+  ctx.font = 'bold 44px "M PLUS 1p", sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText(title, legendX + legendAreaW / 2, chartY + 60);
+
+  const svgEl    = document.getElementById('chart-svg');
+  const svgClone = svgEl.cloneNode(true);
+  svgClone.setAttribute('width',   chartDiam);
+  svgClone.setAttribute('height',  chartDiam);
+  svgClone.setAttribute('viewBox', '-190 -190 380 380');
+
+  const bgRect = document.createElementNS(SVG_NS, 'rect');
+  bgRect.setAttribute('x', '-190'); bgRect.setAttribute('y', '-190');
+  bgRect.setAttribute('width', '380'); bgRect.setAttribute('height', '380');
+  bgRect.setAttribute('fill', '#f7f7fb');
+  svgClone.insertBefore(bgRect, svgClone.firstChild);
+
+  // 選択ハンドルを非表示（出力画像には不要）
+  svgClone.querySelectorAll('[stroke-dasharray]').forEach(el => el.remove());
+  svgClone.querySelectorAll('[cursor="se-resize"]').forEach(el => el.remove());
+
+  return new Promise(resolve => {
+    const svgData = new XMLSerializer().serializeToString(svgClone);
+    const blob    = new Blob([svgData], { type: 'image/svg+xml;charset=utf-8' });
+    const url     = URL.createObjectURL(blob);
+    const img     = new Image();
+    img.onload = () => {
+      ctx.save();
+      ctx.shadowColor = 'rgba(124,77,255,0.15)';
+      ctx.shadowBlur  = 40;
+      ctx.drawImage(img, chartX, chartY, chartDiam, chartDiam);
+      ctx.restore();
+      URL.revokeObjectURL(url);
+
+      const NAME_SIZE = 54;
+      const TIME_SIZE = 39;
+      const DOT_R     = 22;
+      const GAP       = 14;
+      const availH    = H - chartY - 130 - 60;
+
+      // 最大テキスト幅（列幅 - 色丸 - 余白）
+      ctx.font = `bold ${NAME_SIZE}px "M PLUS 1p", sans-serif`;
+      const maxNameW = legendAreaW - DOT_R * 2 - GAP - 40;
+
+      // 長いテキストを maxNameW に収まるよう分割
+      function canvasWrapText(text) {
+        if (ctx.measureText(text).width <= maxNameW) return [text];
+        const lines = [];
+        let line = '';
+        for (const ch of text) {
+          const test = line + ch;
+          if (ctx.measureText(test).width > maxNameW && line.length > 0) {
+            lines.push(line);
+            line = ch;
+          } else {
+            line = test;
+          }
+        }
+        if (line) lines.push(line);
+        return lines;
+      }
+
+      // 行数を考慮した1エントリの高さを計算
+      function entryRowH(e) {
+        ctx.font = `bold ${NAME_SIZE}px "M PLUS 1p", sans-serif`;
+        const nameLines = canvasWrapText(e.name || '(未入力)');
+        return nameLines.length * (NAME_SIZE + 6) + TIME_SIZE + 20;
+      }
+
+      // カテゴリが増えたら2列
+      const singleColH = entries.reduce((s, e) => s + entryRowH(e), 0);
+      const cols    = singleColH > availH ? 2 : 1;
+      const colW    = legendAreaW / cols;
+
+      // 各エントリを描画
+      const colY = [chartY + 130, chartY + 130]; // 列ごとのY cursor
+      entries.forEach((e, i) => {
+        const col = i % cols;
+        const cx  = legendX + colW * col + colW / 2;
+        const y   = colY[col];
+
+        const nameText  = e.name || '(未入力)';
+        ctx.font        = `bold ${NAME_SIZE}px "M PLUS 1p", sans-serif`;
+        const nameLines = canvasWrapText(nameText);
+        const blockH    = nameLines.length * (NAME_SIZE + 6);
+
+        const textX = legendX + colW * col + DOT_R * 2 + GAP + 10;
+        const end   = e.end === '00:00' ? '24:00' : e.end;
+        const timeStr = `${e.start} 〜 ${end}`;
+
+        // 時間（上の行）
+        ctx.fillStyle = '#aaa';
+        ctx.font      = `${TIME_SIZE}px "M PLUS 1p", sans-serif`;
+        ctx.textAlign = 'left';
+        ctx.fillText(timeStr, textX, y + TIME_SIZE - 2);
+
+        // 色丸（時間＋カテゴリ名ブロックの縦中央）
+        const totalBlockH = TIME_SIZE + 8 + blockH;
+        ctx.beginPath();
+        ctx.arc(legendX + colW * col + DOT_R + 10, y + totalBlockH / 2, DOT_R, 0, Math.PI * 2);
+        ctx.fillStyle = e.color;
+        ctx.fill();
+
+        // カテゴリ名（下の行・複数行対応）
+        ctx.fillStyle = '#1a1a2e';
+        ctx.font      = `bold ${NAME_SIZE}px "M PLUS 1p", sans-serif`;
+        ctx.textAlign = 'left';
+        nameLines.forEach((line, li) => {
+          ctx.fillText(line, textX, y + TIME_SIZE + 8 + li * (NAME_SIZE + 6) + NAME_SIZE - 4);
+        });
+
+        colY[col] += totalBlockH + 24;
+      });
+
+      ctx.fillStyle = 'rgba(0,0,0,0.18)';
+      ctx.font = '24px "M PLUS 1p", sans-serif';
+      ctx.textAlign = 'right';
+      ctx.fillText(new Date().toLocaleDateString('ja-JP'), W - 48, H - 28);
+
+      resolve(canvas);
+    };
+    img.src = url;
+  });
+}
+
+// ---- プレビュー用：円グラフ＋タイトルのみ（正方形） ----
+async function buildPreviewCanvas() {
+  await document.fonts.ready;
+  const title = document.getElementById('chartTitle').value || '24hスケジュール';
+  const SIZE = 1080;
+  const TITLE_H = 80;
+  const PAD = 40;
+  const chartDiam = SIZE - PAD * 2;
+
+  const canvas = document.createElement('canvas');
+  canvas.width = SIZE; canvas.height = SIZE;
+  const ctx = canvas.getContext('2d');
+
+  ctx.fillStyle = '#f7f7fb';
+  ctx.fillRect(0, 0, SIZE, SIZE);
+
+  // タイトル
+  ctx.fillStyle = '#1a1a2e';
+  ctx.font = 'bold 44px "M PLUS 1p", sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText(title, SIZE / 2, PAD + 44);
+
+  const svgEl    = document.getElementById('chart-svg');
+  const svgClone = svgEl.cloneNode(true);
+  svgClone.setAttribute('width',  chartDiam);
+  svgClone.setAttribute('height', chartDiam);
+  svgClone.setAttribute('viewBox', '-190 -190 380 380');
+
+  const bgRect = document.createElementNS(SVG_NS, 'rect');
+  bgRect.setAttribute('x', '-190'); bgRect.setAttribute('y', '-190');
+  bgRect.setAttribute('width', '380'); bgRect.setAttribute('height', '380');
+  bgRect.setAttribute('fill', '#f7f7fb');
+  svgClone.insertBefore(bgRect, svgClone.firstChild);
+  svgClone.querySelectorAll('[stroke-dasharray]').forEach(el => el.remove());
+  svgClone.querySelectorAll('[cursor="se-resize"]').forEach(el => el.remove());
+
+  return new Promise(resolve => {
+    const svgData = new XMLSerializer().serializeToString(svgClone);
+    const blob    = new Blob([svgData], { type: 'image/svg+xml;charset=utf-8' });
+    const url     = URL.createObjectURL(blob);
+    const img     = new Image();
+    img.onload = () => {
+      ctx.save();
+      ctx.shadowColor = 'rgba(124,77,255,0.15)';
+      ctx.shadowBlur  = 40;
+      ctx.drawImage(img, PAD, PAD + TITLE_H, chartDiam, chartDiam);
+      ctx.restore();
+      URL.revokeObjectURL(url);
+      resolve(canvas);
+    };
+    img.src = url;
+  });
+}
+
+// ---- プレビュー更新 ----
+async function updatePreview() {
+  const canvas  = await buildPreviewCanvas();
+  const preview = document.getElementById('previewCanvas');
+  preview.width  = canvas.width;
+  preview.height = canvas.height;
+  preview.getContext('2d').drawImage(canvas, 0, 0);
+}
+
+// ---- 初期描画 ----
+renderList();
+renderChart();
+updatePreview();
+updateHistoryBtns();
+</script>
+</body>
+</html>
