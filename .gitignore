@@ -14,12 +14,36 @@ ntuser.ini
 # アプリデータ
 AppData/
 .cursor/
+.cursor-tutor/
+.cursor-tutor-1/
 .vscode/
 .vscode-shared/
 .android/
+.antigravity-ide/
+.cache/
+.config/
+.gemini/
 # .claude/ 全体を除外
 .claude/
+
+# Claude Code の設定・認証情報（トークンが含まれうる）
+.claude.json
+.claude.json.backup
 
 # その他
 .bash_history
 .gitconfig
+
+# Windowsの個人用フォルダ（OneDrive同期・写真・動画・書類など）
+Downloads/
+Documents/
+Music/
+Videos/
+Pictures/
+Contacts/
+Favorites/
+Links/
+Saved Games/
+Searches/
+OneDrive/
+Creative Cloud Files*/

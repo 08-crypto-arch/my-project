@@ -1,0 +1,574 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>フリーランス vs 派遣社員 手取り比較</title>
+<style>
+  :root {
+    --color-freelance: #ec572e;
+    --color-freelance-soft: #fbe4da;
+    --color-dispatch: #3f6b4c;
+    --color-dispatch-soft: #e3ebe4;
+    --color-bg: #faf7f2;
+    --color-card: #ffffff;
+    --color-text: #2b2925;
+    --color-text-sub: #837c73;
+    --color-border: #eae4d9;
+    --radius: 16px;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: "Hiragino Sans", "Yu Gothic", "Noto Sans JP", sans-serif;
+    background: var(--color-bg);
+    color: var(--color-text);
+    line-height: 1.6;
+    padding: 24px 16px 64px;
+  }
+  input[type="range"], input[type="checkbox"] { accent-color: var(--color-freelance); }
+  .app { max-width: 980px; margin: 0 auto; }
+  header h1 { font-size: 22px; margin: 0 0 4px; }
+  header p { margin: 0 0 24px; color: var(--color-text-sub); font-size: 14px; }
+
+  .hero {
+    background: var(--color-freelance-soft);
+    border: 1px solid var(--color-freelance);
+    border-radius: var(--radius);
+    padding: 28px 24px;
+    text-align: center;
+    margin-bottom: 24px;
+  }
+  .hero-label { font-size: 14px; color: var(--color-text-sub); margin-bottom: 6px; }
+  .hero-number { font-size: 44px; font-weight: 700; letter-spacing: -0.02em; color: var(--color-freelance); }
+  .hero-number span { font-size: 22px; font-weight: 500; }
+  .hero-sub { margin-top: 8px; font-size: 14px; color: var(--color-text-sub); }
+
+  .panels {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-bottom: 24px;
+  }
+  @media (max-width: 800px) {
+    .panels { grid-template-columns: 1fr; }
+  }
+  .panel {
+    background: var(--color-card);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius);
+    padding: 18px;
+  }
+  .panel h2 {
+    font-size: 15px;
+    margin: 0 0 14px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .panel.freelance h2 { color: var(--color-freelance); }
+
+  .field { margin-bottom: 14px; }
+  .field:last-child { margin-bottom: 0; }
+  .field label {
+    display: flex;
+    justify-content: space-between;
+    font-size: 13px;
+    color: var(--color-text-sub);
+    margin-bottom: 6px;
+  }
+  .field label .value { color: var(--color-text); font-weight: 600; }
+  .field input[type="range"] { width: 100%; }
+  .field select, .field input[type="number"] {
+    width: 100%;
+    padding: 6px 8px;
+    border: 1px solid var(--color-border);
+    border-radius: 8px;
+    font-size: 14px;
+    font-family: inherit;
+  }
+  .checkbox-row { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--color-text-sub); }
+  .checkbox-row input { width: 16px; height: 16px; }
+
+  .explore {
+    background: var(--color-card);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius);
+    padding: 18px;
+    margin-bottom: 24px;
+  }
+  .explore h2 { font-size: 15px; margin: 0 0 4px; }
+  .explore p { font-size: 13px; color: var(--color-text-sub); margin: 0 0 12px; }
+  .explore-result { font-size: 14px; margin-top: 10px; }
+  .explore-result .diff-plus { color: #1a8a4a; font-weight: 600; }
+  .explore-result .diff-minus { color: #c0392b; font-weight: 600; }
+
+  table.compare {
+    width: 100%;
+    border-collapse: collapse;
+    background: var(--color-card);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius);
+    overflow: hidden;
+    font-size: 13px;
+    margin-bottom: 24px;
+  }
+  table.compare th, table.compare td {
+    padding: 10px 12px;
+    text-align: right;
+    border-bottom: 1px solid var(--color-border);
+  }
+  table.compare th:first-child, table.compare td:first-child { text-align: left; color: var(--color-text-sub); }
+  table.compare thead th { background: #faf9f7; font-weight: 600; }
+  table.compare thead th:nth-child(2) { color: var(--color-freelance); }
+  table.compare thead th:nth-child(3) { color: var(--color-dispatch); }
+  table.compare tr.total td { font-weight: 700; border-bottom: none; border-top: 2px solid var(--color-border); }
+
+  .bars { background: var(--color-card); border: 1px solid var(--color-border); border-radius: var(--radius); padding: 18px; margin-bottom: 24px; }
+  .bars h2 { font-size: 15px; margin: 0 0 14px; }
+  .bar-row { margin-bottom: 14px; }
+  .bar-row-label { display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 4px; }
+  .bar-track { background: #f1efeb; border-radius: 8px; height: 22px; overflow: hidden; display: flex; }
+  .bar-fill { height: 100%; }
+  .bar-fill.freelance { background: var(--color-freelance); }
+  .bar-fill.dispatch { background: var(--color-dispatch); }
+
+  footer.disclaimer {
+    font-size: 12px;
+    color: var(--color-text-sub);
+    background: #faf9f7;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius);
+    padding: 14px 16px;
+  }
+  footer.disclaimer p { margin: 0 0 6px; }
+  footer.disclaimer p:last-child { margin-bottom: 0; }
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <h1>フリーランス vs 派遣社員 手取り比較シミュレーター</h1>
+    <p>フリーランスの月収から、税金・社会保険料を差し引いた「手取り」が、派遣社員なら時給いくらに相当するかを試算します。</p>
+  </header>
+
+  <div class="explore">
+    <h2>💰 まずは現在の時給を教えてください</h2>
+    <p>今の時給（または気になる時給）を入力すると、フリーランスの手取りとどれくらい差があるかが分かります。</p>
+    <div class="field">
+      <label>現在の時給 <span class="value" id="exploreWageValue">¥1,200</span></label>
+      <input type="range" id="exploreWage" min="800" max="5000" step="10" value="1200">
+    </div>
+    <div class="explore-result" id="exploreResult"></div>
+  </div>
+
+  <section class="hero">
+    <div class="hero-label">この条件でのフリーランスの手取りは、派遣社員の時給に換算すると…</div>
+    <div class="hero-number" id="heroWage">¥ ---<span>/ 時間</span></div>
+    <div class="hero-sub" id="heroSub"></div>
+  </section>
+
+  <div class="panels">
+    <div class="panel common">
+      <h2>👪 共通の世帯条件</h2>
+      <div class="field">
+        <label>年齢層</label>
+        <select id="ageBand">
+          <option value="under40">40歳未満</option>
+          <option value="40to64">40〜64歳（介護保険料あり）</option>
+          <option value="65plus">65歳以上</option>
+        </select>
+      </div>
+      <div class="field">
+        <div class="checkbox-row">
+          <input type="checkbox" id="hasSpouse">
+          <label for="hasSpouse" style="margin:0;">配偶者（収入なし）がいる</label>
+        </div>
+      </div>
+      <div class="field">
+        <label>扶養する子ども・親族の人数 <span class="value" id="dependentCountValue">0人</span></label>
+        <input type="range" id="dependentCount" min="0" max="5" step="1" value="0">
+      </div>
+      <div class="field">
+        <label>お住まいの地域の国保水準 <span class="value" id="regionLevelValue">標準</span></label>
+        <select id="regionLevel">
+          <option value="low">低い（保険料が安め）</option>
+          <option value="standard" selected>標準</option>
+          <option value="high">高い（保険料が高め）</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="panel freelance">
+      <h2>🧑‍💻 フリーランス</h2>
+      <div class="field">
+        <label>月間の売上（税引き・経費差引き前） <span class="value" id="monthlyRevenueValue">¥300,000</span></label>
+        <input type="range" id="monthlyRevenue" min="100000" max="1000000" step="10000" value="300000">
+      </div>
+      <div class="field">
+        <label>経費率（売上に対する必要経費の割合） <span class="value" id="expenseRateValue">20%</span></label>
+        <input type="range" id="expenseRate" min="0" max="60" step="1" value="20">
+      </div>
+      <div class="field">
+        <div class="checkbox-row">
+          <input type="checkbox" id="isBlueReturn" checked>
+          <label for="isBlueReturn" style="margin:0;">青色申告特別控除（65万円）を適用する</label>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <table class="compare">
+    <thead>
+      <tr><th>年間ベースの内訳</th><th>フリーランス</th><th>派遣社員（相当時給）</th></tr>
+    </thead>
+    <tbody id="compareBody"></tbody>
+  </table>
+
+  <div class="bars">
+    <h2>📊 月あたりの手取り比較</h2>
+    <div class="bar-row">
+      <div class="bar-row-label"><span>フリーランス</span><span id="barFreelanceLabel"></span></div>
+      <div class="bar-track"><div class="bar-fill freelance" id="barFreelance"></div></div>
+    </div>
+    <div class="bar-row">
+      <div class="bar-row-label"><span>派遣社員（相当時給）</span><span id="barDispatchLabel"></span></div>
+      <div class="bar-track"><div class="bar-fill dispatch" id="barDispatch"></div></div>
+    </div>
+  </div>
+
+  <footer class="disclaimer">
+    <p><strong>このツールについて：</strong>すべて概算のシミュレーションです。実際の税額・保険料は自治体・加入する健康保険組合・個々の控除状況（生命保険料控除、iDeCoなど）によって変わります。正確な金額は税理士や市区町村、年金事務所にご確認ください。</p>
+    <p>前提：所得税は2024年分の速算表＋復興特別所得税2.1%、住民税は所得割10%＋均等割年5,000円、社会保険料は協会けんぽ東京都・厚生年金の目安料率、国民年金は2024年度の月額定額、国民健康保険は所得割・均等割・平等割の概算モデルを使用しています。フリーランスの配偶者・扶養親族分の国民年金・国民健康保険料は、世帯の均等割にのみ反映し、別途発生し得る配偶者本人の年金保険料は含めていません。</p>
+  </footer>
+</div>
+
+<script>
+"use strict";
+
+// ==================== 定数（税率・控除額など） ====================
+
+const MONTHS_PER_YEAR = 12;
+const WEEKS_PER_YEAR = 52.14; // 365日 ÷ 7日
+const DEFAULT_WEEKLY_HOURS = 40; // 派遣社員の週の労働時間（固定・フルタイム想定）
+
+// 所得税 累進課税の速算表（2024年分）
+const INCOME_TAX_BRACKETS = [
+  { limit: 1_950_000, rate: 0.05, deduction: 0 },
+  { limit: 3_300_000, rate: 0.10, deduction: 97_500 },
+  { limit: 6_950_000, rate: 0.20, deduction: 427_500 },
+  { limit: 9_000_000, rate: 0.23, deduction: 636_000 },
+  { limit: 18_000_000, rate: 0.33, deduction: 1_536_000 },
+  { limit: 40_000_000, rate: 0.40, deduction: 2_796_000 },
+  { limit: Infinity, rate: 0.45, deduction: 4_796_000 },
+];
+const RECONSTRUCTION_TAX_RATE = 0.021; // 復興特別所得税（所得税額に対する割合）
+
+const RESIDENT_TAX_INCOME_RATE = 0.10; // 住民税 所得割（市町村民税+道府県民税の合計）
+const RESIDENT_TAX_PER_CAPITA = 5_000; // 住民税 均等割（標準額の目安）
+
+const INCOME_TAX_BASIC_DEDUCTION = 480_000; // 所得税 基礎控除
+const RESIDENT_TAX_BASIC_DEDUCTION = 430_000; // 住民税 基礎控除
+const SPOUSE_DEDUCTION_INCOME_TAX = 380_000; // 配偶者控除（所得税）
+const SPOUSE_DEDUCTION_RESIDENT_TAX = 330_000; // 配偶者控除（住民税）
+const DEPENDENT_DEDUCTION_INCOME_TAX = 380_000; // 扶養控除 1人あたり（所得税・一般扶養親族）
+const DEPENDENT_DEDUCTION_RESIDENT_TAX = 330_000; // 扶養控除 1人あたり（住民税）
+
+const BLUE_RETURN_SPECIAL_DEDUCTION = 650_000; // 青色申告特別控除（e-Tax等の要件を満たす場合）
+
+// 個人事業税
+const BUSINESS_TAX_DEDUCTION = 2_900_000; // 事業主控除
+const BUSINESS_TAX_RATE = 0.05; // 標準的な業種の税率
+
+// 国民年金（2024年度 月額）
+const NATIONAL_PENSION_MONTHLY = 17_510;
+
+// 国民健康保険（概算モデル）
+const NHI_INCOME_DEDUCTION = 430_000; // 所得割算定時の基礎控除相当額
+const NHI_INCOME_RATE = 0.10; // 所得割の料率
+const NHI_PER_CAPITA_BASE = 50_000; // 均等割（加入者1人あたり、標準）
+const NHI_HOUSEHOLD_FLAT_BASE = 20_000; // 平等割（1世帯あたり、標準）
+const NHI_LONGTERM_CARE_PER_CAPITA = 16_000; // 介護分 均等割（40〜64歳の本人に加算）
+const NHI_REGION_FACTOR = { low: 0.85, standard: 1.0, high: 1.2 };
+
+// 会社員（派遣社員）の社会保険料率（協会けんぽ 東京都・目安、労使折半後の本人負担分）
+const HEALTH_INSURANCE_RATE = 0.0998; // 健康保険（折半前）
+const CARE_INSURANCE_RATE = 0.0160; // 介護保険（40〜64歳、折半前・上乗せ分）
+const PENSION_INSURANCE_RATE = 0.183; // 厚生年金（折半前）
+const EMPLOYMENT_INSURANCE_RATE = 0.006; // 雇用保険（本人負担分、折半なし）
+
+// ==================== 給与所得控除 ====================
+
+function calcSalaryIncomeDeduction(grossSalary) {
+  if (grossSalary <= 1_625_000) return 550_000;
+  if (grossSalary <= 1_800_000) return grossSalary * 0.4 - 100_000;
+  if (grossSalary <= 3_600_000) return grossSalary * 0.3 + 80_000;
+  if (grossSalary <= 6_600_000) return grossSalary * 0.2 + 440_000;
+  if (grossSalary <= 8_500_000) return grossSalary * 0.1 + 1_100_000;
+  return 1_950_000;
+}
+
+// ==================== 税額計算の共通関数 ====================
+
+function calcIncomeTax(taxableIncome) {
+  if (taxableIncome <= 0) return 0;
+  const bracket = INCOME_TAX_BRACKETS.find((b) => taxableIncome <= b.limit);
+  const baseTax = taxableIncome * bracket.rate - bracket.deduction;
+  const reconstructionTax = baseTax * RECONSTRUCTION_TAX_RATE;
+  return Math.max(0, baseTax + reconstructionTax);
+}
+
+function calcResidentTax(taxableIncome, hasAnyIncome) {
+  const incomePortion = Math.max(0, taxableIncome * RESIDENT_TAX_INCOME_RATE);
+  const perCapitaPortion = hasAnyIncome ? RESIDENT_TAX_PER_CAPITA : 0;
+  return incomePortion + perCapitaPortion;
+}
+
+function calcPersonalDeductions(hasSpouse, dependentCount) {
+  const incomeTax =
+    INCOME_TAX_BASIC_DEDUCTION +
+    (hasSpouse ? SPOUSE_DEDUCTION_INCOME_TAX : 0) +
+    dependentCount * DEPENDENT_DEDUCTION_INCOME_TAX;
+  const residentTax =
+    RESIDENT_TAX_BASIC_DEDUCTION +
+    (hasSpouse ? SPOUSE_DEDUCTION_RESIDENT_TAX : 0) +
+    dependentCount * DEPENDENT_DEDUCTION_RESIDENT_TAX;
+  return { incomeTax, residentTax };
+}
+
+// ==================== フリーランスの手取り計算 ====================
+
+function calculateFreelancer(state) {
+  const { monthlyRevenue, expenseRate, isBlueReturn, hasSpouse, dependentCount, ageBand, regionLevel } = state;
+
+  const annualRevenue = monthlyRevenue * MONTHS_PER_YEAR;
+  const expenses = annualRevenue * expenseRate;
+  const incomeAfterExpenses = Math.max(0, annualRevenue - expenses);
+  const blueDeduction = isBlueReturn ? Math.min(BLUE_RETURN_SPECIAL_DEDUCTION, incomeAfterExpenses) : 0;
+  const businessIncome = Math.max(0, incomeAfterExpenses - blueDeduction);
+
+  // 個人事業税
+  const businessTax = Math.max(0, (businessIncome - BUSINESS_TAX_DEDUCTION) * BUSINESS_TAX_RATE);
+
+  // 国民年金（本人分のみ）
+  const nationalPension = NATIONAL_PENSION_MONTHLY * MONTHS_PER_YEAR;
+
+  // 国民健康保険（世帯全員分の均等割・平等割を含む概算）
+  const householdSize = 1 + (hasSpouse ? 1 : 0) + dependentCount;
+  const regionFactor = NHI_REGION_FACTOR[regionLevel];
+  const nhiIncomeBase = Math.max(0, businessIncome - NHI_INCOME_DEDUCTION);
+  const nhiIncomePortion = nhiIncomeBase * NHI_INCOME_RATE;
+  const nhiPerCapitaPortion = householdSize * NHI_PER_CAPITA_BASE;
+  const nhiCarePortion = ageBand === "40to64" ? NHI_LONGTERM_CARE_PER_CAPITA : 0;
+  const nationalHealthInsurance =
+    (nhiIncomePortion + nhiPerCapitaPortion + NHI_HOUSEHOLD_FLAT_BASE + nhiCarePortion) * regionFactor;
+
+  const socialInsuranceTotal = nationalPension + nationalHealthInsurance;
+
+  const deductions = calcPersonalDeductions(hasSpouse, dependentCount);
+
+  const taxableIncomeForIncomeTax = Math.max(0, businessIncome - socialInsuranceTotal - deductions.incomeTax);
+  const incomeTax = calcIncomeTax(taxableIncomeForIncomeTax);
+
+  const taxableIncomeForResidentTax = Math.max(0, businessIncome - socialInsuranceTotal - deductions.residentTax);
+  const residentTax = calcResidentTax(taxableIncomeForResidentTax, businessIncome > 0);
+
+  const takeHome = annualRevenue - expenses - businessTax - socialInsuranceTotal - incomeTax - residentTax;
+
+  return {
+    annualRevenue,
+    expenses,
+    businessIncome,
+    businessTax,
+    pension: nationalPension,
+    healthInsurance: nationalHealthInsurance,
+    incomeTax,
+    residentTax,
+    takeHome,
+  };
+}
+
+// ==================== 派遣社員の手取り計算 ====================
+
+function calculateDispatch(hourlyWage, weeklyHours, state) {
+  const { hasSpouse, dependentCount, ageBand } = state;
+
+  const annualGrossSalary = hourlyWage * weeklyHours * WEEKS_PER_YEAR;
+
+  const healthInsuranceRate = HEALTH_INSURANCE_RATE + (ageBand === "40to64" ? CARE_INSURANCE_RATE : 0);
+  const healthInsurance = (annualGrossSalary * healthInsuranceRate) / 2; // 労使折半
+  const pensionInsurance = (annualGrossSalary * PENSION_INSURANCE_RATE) / 2; // 労使折半
+  const employmentInsurance = annualGrossSalary * EMPLOYMENT_INSURANCE_RATE;
+  const socialInsuranceTotal = healthInsurance + pensionInsurance + employmentInsurance;
+
+  const salaryIncomeDeduction = calcSalaryIncomeDeduction(annualGrossSalary);
+  const salaryIncome = Math.max(0, annualGrossSalary - salaryIncomeDeduction);
+
+  const deductions = calcPersonalDeductions(hasSpouse, dependentCount);
+
+  const taxableIncomeForIncomeTax = Math.max(0, salaryIncome - socialInsuranceTotal - deductions.incomeTax);
+  const incomeTax = calcIncomeTax(taxableIncomeForIncomeTax);
+
+  const taxableIncomeForResidentTax = Math.max(0, salaryIncome - socialInsuranceTotal - deductions.residentTax);
+  const residentTax = calcResidentTax(taxableIncomeForResidentTax, annualGrossSalary > 0);
+
+  const takeHome = annualGrossSalary - socialInsuranceTotal - incomeTax - residentTax;
+
+  return {
+    annualGrossSalary,
+    healthInsurance,
+    pensionInsurance,
+    employmentInsurance,
+    incomeTax,
+    residentTax,
+    takeHome,
+  };
+}
+
+// ==================== 相当時給の二分探索 ====================
+
+const WAGE_SEARCH_MIN = 0;
+const WAGE_SEARCH_MAX = 20000;
+const WAGE_SEARCH_ITERATIONS = 60;
+
+function findEquivalentHourlyWage(targetTakeHome, weeklyHours, state) {
+  let low = WAGE_SEARCH_MIN;
+  let high = WAGE_SEARCH_MAX;
+  for (let i = 0; i < WAGE_SEARCH_ITERATIONS; i++) {
+    const mid = (low + high) / 2;
+    const takeHome = calculateDispatch(mid, weeklyHours, state).takeHome;
+    if (takeHome < targetTakeHome) {
+      low = mid;
+    } else {
+      high = mid;
+    }
+  }
+  return (low + high) / 2;
+}
+
+// ==================== 画面まわり ====================
+
+const yen = (value) => "¥" + Math.round(value).toLocaleString("ja-JP");
+
+const els = {
+  ageBand: document.getElementById("ageBand"),
+  hasSpouse: document.getElementById("hasSpouse"),
+  dependentCount: document.getElementById("dependentCount"),
+  dependentCountValue: document.getElementById("dependentCountValue"),
+  regionLevel: document.getElementById("regionLevel"),
+  regionLevelValue: document.getElementById("regionLevelValue"),
+  monthlyRevenue: document.getElementById("monthlyRevenue"),
+  monthlyRevenueValue: document.getElementById("monthlyRevenueValue"),
+  expenseRate: document.getElementById("expenseRate"),
+  expenseRateValue: document.getElementById("expenseRateValue"),
+  isBlueReturn: document.getElementById("isBlueReturn"),
+  exploreWage: document.getElementById("exploreWage"),
+  exploreWageValue: document.getElementById("exploreWageValue"),
+  exploreResult: document.getElementById("exploreResult"),
+  heroWage: document.getElementById("heroWage"),
+  heroSub: document.getElementById("heroSub"),
+  compareBody: document.getElementById("compareBody"),
+  barFreelance: document.getElementById("barFreelance"),
+  barFreelanceLabel: document.getElementById("barFreelanceLabel"),
+  barDispatch: document.getElementById("barDispatch"),
+  barDispatchLabel: document.getElementById("barDispatchLabel"),
+};
+
+let userMovedExploreSlider = false;
+els.exploreWage.addEventListener("pointerdown", () => { userMovedExploreSlider = true; });
+
+function readState() {
+  return {
+    ageBand: els.ageBand.value,
+    hasSpouse: els.hasSpouse.checked,
+    dependentCount: Number(els.dependentCount.value),
+    regionLevel: els.regionLevel.value,
+    monthlyRevenue: Number(els.monthlyRevenue.value),
+    expenseRate: Number(els.expenseRate.value) / 100,
+    isBlueReturn: els.isBlueReturn.checked,
+  };
+}
+
+function updateLabels(state) {
+  els.dependentCountValue.textContent = state.dependentCount + "人";
+  els.regionLevelValue.textContent =
+    { low: "低い", standard: "標準", high: "高い" }[state.regionLevel];
+  els.monthlyRevenueValue.textContent = yen(state.monthlyRevenue);
+  els.expenseRateValue.textContent = Math.round(state.expenseRate * 100) + "%";
+}
+
+function render() {
+  const state = readState();
+  updateLabels(state);
+
+  const freelancer = calculateFreelancer(state);
+  const equivalentWage = findEquivalentHourlyWage(freelancer.takeHome, DEFAULT_WEEKLY_HOURS, state);
+  const dispatchAtEquivalent = calculateDispatch(equivalentWage, DEFAULT_WEEKLY_HOURS, state);
+
+  // 探索スライダーをユーザーが触っていなければ、相当時給に追従させる
+  if (!userMovedExploreSlider) {
+    els.exploreWage.value = Math.round(equivalentWage / 10) * 10;
+  }
+
+  // ヒーロー表示
+  els.heroWage.innerHTML = yen(equivalentWage) + "<span> / 時間</span>";
+  els.heroSub.textContent =
+    `週${DEFAULT_WEEKLY_HOURS}時間勤務の派遣社員として働いた場合、月収${yen(state.monthlyRevenue)}のフリーランスと同じ手取り` +
+    `（月あたり約${yen(freelancer.takeHome / MONTHS_PER_YEAR)}）になる時給の目安です。`;
+
+  // 内訳テーブル
+  const rows = [
+    ["額面（年間）", freelancer.annualRevenue, dispatchAtEquivalent.annualGrossSalary],
+    ["必要経費", freelancer.expenses, 0],
+    ["社会保険料（年金＋健康保険）", freelancer.pension + freelancer.healthInsurance,
+      dispatchAtEquivalent.healthInsurance + dispatchAtEquivalent.pensionInsurance + dispatchAtEquivalent.employmentInsurance],
+    ["個人事業税", freelancer.businessTax, 0],
+    ["所得税（復興特別所得税込み）", freelancer.incomeTax, dispatchAtEquivalent.incomeTax],
+    ["住民税", freelancer.residentTax, dispatchAtEquivalent.residentTax],
+  ];
+  els.compareBody.innerHTML = rows
+    .map(([label, a, b]) => `<tr><td>${label}</td><td>${yen(a)}</td><td>${yen(b)}</td></tr>`)
+    .join("") +
+    `<tr class="total"><td>手取り（年間）</td><td>${yen(freelancer.takeHome)}</td><td>${yen(dispatchAtEquivalent.takeHome)}</td></tr>`;
+
+  // 棒グラフ（月あたり手取り）
+  const monthlyFreelance = freelancer.takeHome / MONTHS_PER_YEAR;
+  const monthlyDispatch = dispatchAtEquivalent.takeHome / MONTHS_PER_YEAR;
+  const maxValue = Math.max(monthlyFreelance, monthlyDispatch, 1);
+  els.barFreelance.style.width = (monthlyFreelance / maxValue) * 100 + "%";
+  els.barDispatch.style.width = (monthlyDispatch / maxValue) * 100 + "%";
+  els.barFreelanceLabel.textContent = yen(monthlyFreelance) + " / 月";
+  els.barDispatchLabel.textContent = yen(monthlyDispatch) + " / 月";
+
+  renderExplore(state, freelancer.takeHome);
+}
+
+function renderExplore(state, freelancerTakeHome) {
+  const wage = Number(els.exploreWage.value);
+  els.exploreWageValue.textContent = yen(wage);
+
+  const result = calculateDispatch(wage, DEFAULT_WEEKLY_HOURS, state);
+  const diffAnnual = result.takeHome - freelancerTakeHome;
+  const diffMonthly = diffAnnual / MONTHS_PER_YEAR;
+  const diffClass = diffAnnual >= 0 ? "diff-plus" : "diff-minus";
+  const diffSign = diffAnnual >= 0 ? "+" : "";
+
+  els.exploreResult.innerHTML =
+    `時給${yen(wage)}の派遣社員の手取りは月あたり${yen(result.takeHome / MONTHS_PER_YEAR)}` +
+    ` （フリーランスとの差：<span class="${diffClass}">${diffSign}${yen(diffMonthly)} / 月</span>）`;
+}
+
+[
+  "ageBand", "hasSpouse", "dependentCount", "regionLevel",
+  "monthlyRevenue", "expenseRate", "isBlueReturn",
+].forEach((id) => els[id].addEventListener("input", render));
+
+els.exploreWage.addEventListener("input", () => {
+  renderExplore(readState(), calculateFreelancer(readState()).takeHome);
+});
+
+render();
+</script>
+</body>
+</html>
