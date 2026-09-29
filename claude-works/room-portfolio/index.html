@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Yui Morita | Portfolio</title>
+<meta name="description" content="フロントエンドエンジニア／UIデザイナーのポートフォリオサイト（サンプル）">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@400;500;700;800&family=Quicksand:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+
+<!-- ヘッダー -->
+<header class="site-header" id="top">
+  <div class="header-inner">
+    <a class="logo" href="#top">
+      <span class="logo-mark">N</span>
+      <span class="logo-text">Ns. Room</span>
+    </a>
+    <nav class="nav" id="nav">
+      <a href="#top">ホーム</a>
+      <a href="#about">わたしについて</a>
+      <a href="#works">つくったもの</a>
+      <a href="#skills">できること</a>
+      <a href="#contact">おたより</a>
+    </nav>
+    <div class="header-actions">
+      <a class="btn btn-ghost" href="#works">作品を見る</a>
+      <a class="btn btn-primary" href="#contact">お問い合わせ</a>
+      <button class="nav-toggle" id="navToggle" aria-label="メニューを開く" aria-expanded="false">
+        <span></span><span></span><span></span>
+      </button>
+    </div>
+  </div>
+</header>
+
+<!-- ヒーロー：部屋のイラスト -->
+<section class="hero">
+  <div class="hero-copy">
+    <p class="hero-eyebrow">Welcome to my room ☕</p>
+    <h1 class="hero-title">つくること、<br>たのしむこと。</h1>
+    <p class="hero-lead">
+      ゆるっとした部屋の片隅から、Web制作のあれこれをお届けします。<br>
+      遊び心のあるUIとちいさな実験が好きな、駆け出しフロントエンドエンジニアです。
+    </p>
+    <div class="hero-cta">
+      <a class="btn btn-primary btn-lg" href="#works">作品を見る</a>
+      <a class="btn btn-outline btn-lg" href="#about">自己紹介を読む</a>
+    </div>
+  </div>
+
+  <div class="room-stage" id="roomStage" aria-hidden="true">
+    <div class="room-frame">
+      <img class="room-bg" src="assets/img/room-bg.png" alt="">
+
+      <img class="room-item item-window" src="assets/img/window-anim.gif" alt="">
+      <img class="room-item item-clock" src="assets/img/clock-colorful.png" alt="">
+      <img class="room-item item-dresser" src="assets/svg/dresser.svg" alt="">
+      <img class="room-item item-sofa" src="assets/svg/sofa-red.svg" alt="">
+      <img class="room-item item-table" src="assets/svg/table-plant.svg" alt="">
+      <img class="room-item item-lamp" src="assets/svg/lamp-standing.svg" alt="">
+      <img class="room-item item-beanbag" src="assets/svg/beanbag.svg" alt="">
+      <img class="room-item item-box" src="assets/svg/box.svg" alt="">
+    </div>
+  </div>
+</section>
+
+<!-- About -->
+<section class="section" id="about">
+  <div class="section-inner about-grid">
+    <div class="about-figure">
+      <img src="assets/svg/chair-cat.svg" alt="猫が座る椅子のイラスト" class="float-slow">
+    </div>
+    <div class="about-body">
+      <p class="section-eyebrow">About</p>
+      <h2 class="section-title">わたしについて</h2>
+      <p class="about-name">森田 結（もりた ゆい）<span class="about-role">Frontend Engineer / UI Designer</span></p>
+      <p class="about-text">
+        「作ったもので誰かが少し笑ってくれたら嬉しい」をモットーに、Web制作をしています。
+        普段は React や Tailwind CSS を使ったUI実装が中心ですが、素のHTML/CSS/JSで
+        手を動かすのも好きで、休日はドット絵素材を組み合わせて遊んでいます。
+      </p>
+      <p class="about-text">
+        小さな会社のコーポレートサイトから、個人向けのLP・ツール制作まで幅広く対応します。
+        「ちょっと遊び心のあるサイトにしたい」というご相談、大歓迎です。
+      </p>
+      <ul class="about-facts">
+        <li><span>🏠</span>拠点：日本（フルリモート対応）</li>
+        <li><span>🎓</span>独学 → 制作会社勤務を経てフリーランスへ</li>
+        <li><span>☕</span>好きなもの：珈琲、観葉植物、レトロゲームのドット絵</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- Works -->
+<section class="section section-alt" id="works">
+  <div class="section-inner">
+    <p class="section-eyebrow">Works</p>
+    <h2 class="section-title">つくったもの</h2>
+    <p class="section-lead">これまでの制作物からいくつかピックアップしました（サンプル表示です）。</p>
+
+    <div class="works-grid">
+      <article class="work-card">
+        <div class="work-thumb work-thumb-1">
+          <img src="assets/img/work-calculator.png" alt="">
+        </div>
+        <div class="work-body">
+          <span class="work-tag">Web App</span>
+          <h3>電卓組み立てキット</h3>
+          <p>色・素材・形・フォントを自由に組み合わせて、自分だけの電卓デザインを作れるカスタマイザー。</p>
+          <div class="work-stack">
+            <span>React</span><span>JavaScript</span>
+          </div>
+        </div>
+      </article>
+
+      <article class="work-card">
+        <div class="work-thumb work-thumb-2">
+          <img src="assets/img/work-nail.png" alt="">
+        </div>
+        <div class="work-body">
+          <span class="work-tag">Landing Page</span>
+          <h3>ネイルサロン LP</h3>
+          <p>やわらかい配色と余白づくりを意識した、ネイルサロンのランディングページ。</p>
+          <div class="work-stack">
+            <span>HTML</span><span>CSS</span><span>JS</span>
+          </div>
+        </div>
+      </article>
+
+      <article class="work-card">
+        <div class="work-thumb work-thumb-3">
+          <img src="assets/img/work-gym.png" alt="">
+        </div>
+        <div class="work-body">
+          <span class="work-tag">Landing Page</span>
+          <h3>パーソナルジム LP</h3>
+          <p>ゴールド×リッチブラックで高級感を演出した、パーソナルジムのサービス紹介LP。</p>
+          <div class="work-stack">
+            <span>Tailwind CSS</span>
+          </div>
+        </div>
+      </article>
+
+      <article class="work-card">
+        <div class="work-thumb work-thumb-4">
+          <img src="assets/img/work-space.png" alt="">
+        </div>
+        <div class="work-body">
+          <span class="work-tag">Creative</span>
+          <h3>宇宙お絵描きアプリ</h3>
+          <p>描いた絵が宇宙空間を漂うインタラクティブなドローイングアプリ。Canvas APIで実装。</p>
+          <div class="work-stack">
+            <span>Canvas API</span><span>JavaScript</span>
+          </div>
+        </div>
+      </article>
+    </div>
+  </div>
+</section>
+
+<!-- Skills -->
+<section class="section" id="skills">
+  <div class="section-inner">
+    <p class="section-eyebrow">Skills</p>
+    <h2 class="section-title">できること</h2>
+    <p class="section-lead">日々アップデート中の道具箱です。</p>
+
+    <div class="skills-grid">
+      <div class="skill-group">
+        <h3>Front-end</h3>
+        <div class="skill-tags">
+          <span>HTML</span><span>CSS</span><span>JavaScript</span>
+          <span>React</span><span>Tailwind CSS</span>
+        </div>
+      </div>
+      <div class="skill-group">
+        <h3>Design</h3>
+        <div class="skill-tags">
+          <span>Figma</span><span>Adobe XD</span><span>UI設計</span>
+          <span>ドット絵素材制作</span>
+        </div>
+      </div>
+      <div class="skill-group">
+        <h3>Tools</h3>
+        <div class="skill-tags">
+          <span>Git / GitHub</span><span>VS Code</span><span>Vite</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Contact -->
+<section class="section section-alt" id="contact">
+  <div class="section-inner contact-grid">
+    <div class="contact-intro">
+      <p class="section-eyebrow">Contact</p>
+      <h2 class="section-title">おたよりください</h2>
+      <p class="section-lead">
+        お仕事のご相談、雑談、なんでもお気軽にどうぞ。<br>
+        ※このフォームはサンプルのため送信はできません。
+      </p>
+      <img src="assets/svg/mug.svg" alt="" class="contact-figure float-slow">
+    </div>
+
+    <form class="contact-form" id="contactForm">
+      <label>
+        お名前
+        <input type="text" name="name" placeholder="やまだ はなこ" required>
+      </label>
+      <label>
+        メールアドレス
+        <input type="email" name="email" placeholder="you@example.com" required>
+      </label>
+      <label>
+        メッセージ
+        <textarea name="message" rows="4" placeholder="お問い合わせ内容をご記入ください" required></textarea>
+      </label>
+      <button type="submit" class="btn btn-primary btn-lg">送信する</button>
+      <p class="form-note" id="formNote" role="status"></p>
+    </form>
+  </div>
+</section>
+
+<footer class="site-footer">
+  <div class="footer-inner">
+    <div class="footer-logo">
+      <span class="logo-mark">N</span>
+      <span class="logo-text">Ns. Room</span>
+    </div>
+    <div class="footer-links">
+      <a href="#" aria-label="X (Twitter)">X</a>
+      <a href="#" aria-label="GitHub">GitHub</a>
+      <a href="#" aria-label="Instagram">Instagram</a>
+    </div>
+    <p class="footer-copy">&copy; 2026 Ns. Room — Sample Portfolio</p>
+  </div>
+</footer>
+
+<script src="assets/script.js"></script>
+</body>
+</html>
