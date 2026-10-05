@@ -1,5 +1,5 @@
 /* ==========================================================
-   Ns. Room Portfolio - style.css
+   Pachi's Room Portfolio - style.css
    ========================================================== */
 
 :root {
@@ -112,16 +112,8 @@ ul { list-style: none; margin: 0; padding: 0; }
 }
 
 .logo-mark {
-  width: 36px;
-  height: 36px;
-  border-radius: 11px;
-  background: linear-gradient(145deg, var(--accent-3), var(--accent));
-  color: #fff;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 1.05rem;
-  box-shadow: 0 6px 14px rgba(255, 111, 89, 0.35);
+  height: 40px;
+  width: auto;
   flex-shrink: 0;
 }
 
@@ -274,9 +266,52 @@ ul { list-style: none; margin: 0; padding: 0; }
 .item-sofa:hover,
 .item-dresser:hover,
 .item-lamp:hover,
-.item-beanbag:hover,
-.item-table:hover {
+.item-beanbag:hover {
   transform: translateY(-4px) rotate(-1deg);
+}
+
+/* ソファの後ろに隠れている犬：ソファをクリックすると上から頭だけをのぞかせる */
+.item-sofa { cursor: pointer; }
+
+.room-dog {
+  --dog-peek-rise: -70%;      /* 頭だけ出すとき、上へ動く量（犬自身の高さに対する割合） */
+  left: 44%;                  /* ソファの背もたれの真ん中あたり（2つのクッションの間） */
+  top: 53%;                   /* ソファの背もたれの上端のすぐ下。ここでは犬全体がソファに隠れる */
+  width: 8%;
+  pointer-events: none;       /* 隠れている間はクリックを受けない */
+  transition: transform 0.25s ease-in;
+}
+.room-frame.is-dog-out .room-dog {
+  transform: translateY(var(--dog-peek-rise));
+  pointer-events: auto;
+  cursor: pointer;
+  transition: transform 0.45s cubic-bezier(0.34, 1.7, 0.5, 1);  /* 少し行き過ぎてから戻る、ぴょこっとした動き */
+}
+
+/* テーブルの観葉植物：ホバーで葉だけがそよそよ揺れる */
+.item-table {
+  --leaf-base-y: 29%;         /* 葉と鉢の境目（絵の上からの位置） */
+  --leaf-overlap: 0.5%;       /* 境目に隙間ができないよう葉側を少し下まで重ねる */
+  --leaf-pivot-x: 55.4%;      /* 葉の根元（揺れの軸）の横位置 */
+  --leaf-sway-angle: 3deg;    /* これより大きく傾けると、葉の黒い輪郭が鉢の脇にはみ出して見える */
+  --leaf-sway-duration: 0.9s;
+  --leaf-sway-count: 3;
+}
+.item-table img { width: 100%; }
+.table-base { clip-path: inset(var(--leaf-base-y) 0 0 0); }
+.table-leaves {
+  position: absolute;
+  inset: 0;
+  clip-path: inset(0 0 calc(100% - var(--leaf-base-y) - var(--leaf-overlap)) 0);
+}
+.table-leaves img { transform-origin: var(--leaf-pivot-x) var(--leaf-base-y); }
+.item-table:hover .table-leaves img {
+  animation: leaf-sway var(--leaf-sway-duration) ease-in-out var(--leaf-sway-count);
+}
+@keyframes leaf-sway {
+  0%, 100% { transform: rotate(0deg); }
+  25% { transform: rotate(calc(var(--leaf-sway-angle) * -1)); }
+  75% { transform: rotate(var(--leaf-sway-angle)); }
 }
 
 .item-box:hover {
@@ -291,6 +326,7 @@ ul { list-style: none; margin: 0; padding: 0; }
 .item-clock {
   animation: tick 3.2s ease-in-out infinite;
   transform-origin: 50% 15%;
+  cursor: pointer;
 }
 @keyframes tick {
   0%, 100% { transform: rotate(-2deg); }
@@ -402,6 +438,7 @@ ul { list-style: none; margin: 0; padding: 0; }
 }
 
 .work-card {
+  display: block;
   background: var(--panel);
   border-radius: var(--radius-md);
   overflow: hidden;
@@ -453,6 +490,67 @@ ul { list-style: none; margin: 0; padding: 0; }
   border-radius: 999px;
 }
 
+.works-note {
+  margin: 40px 0 0;
+  text-align: center;
+  text-wrap: balance;
+  word-break: auto-phrase;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--text-soft);
+}
+
+/* ---------- 作品の詳細ポップアップ ---------- */
+.work-modal {
+  width: min(520px, calc(100% - 32px));
+  max-height: calc(100dvh - 32px);
+  padding: 0;
+  border: none;
+  border-radius: var(--radius-lg);
+  background: var(--panel);
+  color: var(--text);
+  box-shadow: 0 24px 60px rgba(74, 63, 51, 0.3);
+  overflow: auto;
+}
+
+.work-modal[open] { animation: modal-pop 0.25s ease; }
+
+.work-modal::backdrop {
+  background: rgba(74, 63, 51, 0.5);
+  backdrop-filter: blur(3px);
+}
+
+/* ポップアップを開いている間は背面をスクロールさせない */
+body:has(.work-modal[open]) { overflow: hidden; }
+
+.work-modal .work-thumb { height: 220px; }
+.work-modal .work-body { padding: 24px 28px 28px; }
+.work-modal .work-body p { font-size: 0.95rem; }
+.work-modal .btn { margin-top: 22px; }
+
+.work-modal-close {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  width: 36px;
+  height: 36px;
+  border: none;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.9);
+  color: var(--text);
+  font-size: 1.4rem;
+  line-height: 1;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(74, 63, 51, 0.2);
+  transition: transform 0.2s ease;
+}
+.work-modal-close:hover { transform: scale(1.1); }
+
+@keyframes modal-pop {
+  from { opacity: 0; transform: translateY(12px) scale(0.97); }
+  to { opacity: 1; transform: none; }
+}
+
 /* ---------- Skills ---------- */
 .skills-grid {
   display: grid;
@@ -473,6 +571,26 @@ ul { list-style: none; margin: 0; padding: 0; }
   font-size: 1rem;
 }
 
+/* 「強み」カードは他のカードより目立たせるため、横いっぱいに広げる */
+.skill-group-wide {
+  grid-column: 1 / -1;
+  background: var(--accent);
+  border-color: var(--accent-dark);
+  color: #fff;
+}
+.skill-group-wide .skill-tags span {
+  background: #fff;
+  color: var(--accent-dark);
+}
+.skill-note {
+  margin: 14px 0 0;
+  padding-left: 1.2em;
+  list-style: disc;
+  font-size: 0.9rem;
+  color: #fff;
+}
+.skill-note li + li { margin-top: 4px; }
+
 .skill-tags { display: flex; flex-wrap: wrap; gap: 8px; }
 .skill-tags span {
   font-size: 0.82rem;
@@ -491,9 +609,24 @@ ul { list-style: none; margin: 0; padding: 0; }
   align-items: start;
 }
 
-.contact-figure { width: 120px; margin-top: 24px; }
+.contact-mail {
+  display: inline-block;
+  font-weight: 700;
+  color: var(--accent-dark);
+  border-bottom: 2px solid currentColor;
+  word-break: break-all;
+}
 
-.contact-form {
+.contact-dog {
+  --dog-max-width: 300px;
+  --dog-ratio: 480 / 352;     /* アニメーション画像の縦横比 */
+  width: 100%;
+  max-width: var(--dog-max-width);
+  aspect-ratio: var(--dog-ratio);
+  margin-top: 24px;
+}
+
+.contact-card {
   background: var(--panel);
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
@@ -501,42 +634,16 @@ ul { list-style: none; margin: 0; padding: 0; }
   box-shadow: var(--shadow);
   display: flex;
   flex-direction: column;
+  align-items: flex-start;
   gap: 18px;
 }
 
-.contact-form label {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
+.contact-card p { margin: 0; color: var(--text-soft); }
+
+.contact-card .contact-card-sub {
+  margin-top: 8px;
   font-size: 0.88rem;
   font-weight: 700;
-  color: var(--text-soft);
-}
-
-.contact-form input,
-.contact-form textarea {
-  font-family: var(--font-body);
-  font-size: 0.95rem;
-  padding: 12px 14px;
-  border-radius: var(--radius-sm);
-  border: 1.5px solid var(--border);
-  background: var(--bg);
-  color: var(--text);
-  resize: vertical;
-}
-.contact-form input:focus,
-.contact-form textarea:focus {
-  outline: none;
-  border-color: var(--accent-2);
-}
-
-.contact-form button { align-self: flex-start; }
-
-.form-note {
-  margin: 0;
-  font-size: 0.85rem;
-  color: var(--accent-dark);
-  min-height: 1.4em;
 }
 
 /* ---------- フッター ---------- */
