@@ -20,6 +20,15 @@ if (navToggle && siteHeader) {
   });
 }
 
+// ロゴやメニューの「ホーム」など、#top へのリンクはページの一番上までなめらかに戻る
+// （#top は固定表示のヘッダー自身のため、リンクだけではスクロールしない）
+document.querySelectorAll('a[href="#top"]').forEach((link) => {
+  link.addEventListener('click', (event) => {
+    event.preventDefault();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  });
+});
+
 // スクロールで各セクションをふわっと表示
 const revealTargets = document.querySelectorAll(
   '.about-grid, .works-grid .work-card, .skills-grid .skill-group, .contact-grid'

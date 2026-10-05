@@ -217,6 +217,7 @@ ul { list-style: none; margin: 0; padding: 0; }
 
 /* ---------- 部屋イラスト ---------- */
 .room-stage {
+  --room-max-width: 1140px;
   position: relative;
   width: 100%;
   display: flex;
@@ -228,13 +229,49 @@ ul { list-style: none; margin: 0; padding: 0; }
 .room-frame {
   position: relative;
   width: 100%;
-  max-width: 1140px;
+  max-width: var(--room-max-width);
   aspect-ratio: 1535 / 1024;
   border-radius: var(--radius-lg);
   overflow: hidden;
   box-shadow: var(--shadow);
   border: 6px solid #fff;
   background: #f4ead9;
+}
+
+/* 部屋の下のヒント：上向きのしっぽ付きふきだし */
+.room-hint {
+  --hint-tail-size: 8px;
+  --hint-tail-right: 28px;    /* しっぽの位置（ふきだしの右端から） */
+  position: relative;
+  /* 部屋の枠の右端にそろえる（広い画面で枠が中央に寄っていても右下に来る） */
+  align-self: flex-end;
+  margin: var(--hint-tail-size) max(0px, calc((100% - var(--room-max-width)) / 2)) 0 0;
+  padding: 8px 18px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--accent-dark);
+  background: #fff;
+  border: 2px solid var(--border);
+  border-radius: 999px;
+  box-shadow: var(--shadow);
+}
+.room-hint::before,
+.room-hint::after {
+  content: "";
+  position: absolute;
+  right: var(--hint-tail-right);
+  border: var(--hint-tail-size) solid transparent;
+}
+/* 外側（枠線の色）と内側（白）の2枚を重ねて、しっぽにも枠線をつける */
+.room-hint::before {
+  bottom: 100%;
+  border-bottom-color: var(--border);
+  margin-bottom: 2px;
+}
+.room-hint::after {
+  bottom: 100%;
+  border-bottom-color: #fff;
+  margin-bottom: -1px;
 }
 
 .room-bg {
@@ -573,20 +610,22 @@ body:has(.work-modal[open]) { overflow: hidden; }
 
 /* 「強み」カードは他のカードより目立たせるため、横いっぱいに広げる */
 .skill-group-wide {
+  --point-bg: #eb6b57;
   grid-column: 1 / -1;
-  background: var(--accent);
-  border-color: var(--accent-dark);
+  background: var(--point-bg);
+  border-color: var(--point-bg);
   color: #fff;
 }
 .skill-group-wide .skill-tags span {
   background: #fff;
-  color: var(--accent-dark);
+  color: var(--point-bg);
 }
 .skill-note {
   margin: 14px 0 0;
   padding-left: 1.2em;
   list-style: disc;
   font-size: 0.9rem;
+  font-weight: 700;
   color: #fff;
 }
 .skill-note li + li { margin-top: 4px; }
@@ -662,6 +701,7 @@ body:has(.work-modal[open]) { overflow: hidden; }
   gap: 20px;
 }
 .footer-logo { display: flex; align-items: center; gap: 10px; font-family: var(--font-display); font-weight: 800; }
+.footer-logo:hover { opacity: 0.8; }
 .footer-links { display: flex; gap: 18px; }
 .footer-links a { opacity: 0.8; font-weight: 600; font-size: 0.9rem; }
 .footer-links a:hover { opacity: 1; }
