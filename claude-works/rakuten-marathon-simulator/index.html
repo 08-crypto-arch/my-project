@@ -17,6 +17,8 @@
     --ok-soft: #e6f4ec;
     --warn: #b26a00;
     --warn-soft: #fff3df;
+    --chart-bonus: #bf0000;  /* グラフ：マラソン特典 */
+    --chart-spu: #4a7bb7;    /* グラフ：SPU（色覚の違いがあっても見分けやすい組み合わせ） */
   }
   * { box-sizing: border-box; }
   body {
@@ -47,6 +49,41 @@
   .stat .value small { font-size: .85rem; font-weight: 500; margin-left: 2px; }
   .stat.main { background: var(--accent-soft); }
   .stat.main .value { color: var(--accent); }
+
+  /* 数字が変わったときのハイライト */
+  .stat.changed-up { animation: flash-up 1.4s ease; }
+  .stat.changed-down { animation: flash-down 1.4s ease; }
+  @keyframes flash-up {
+    0%   { box-shadow: 0 0 0 3px var(--accent); transform: scale(1.04); }
+    100% { box-shadow: 0 0 0 0 transparent; transform: scale(1); }
+  }
+  @keyframes flash-down {
+    0%   { box-shadow: 0 0 0 3px #9a9a9a; transform: scale(.97); }
+    100% { box-shadow: 0 0 0 0 transparent; transform: scale(1); }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .stat.changed-up, .stat.changed-down { animation-duration: .01s; }
+  }
+
+  /* ポイントの内訳（積み上げ棒グラフ） */
+  .breakdown { margin-top: 18px; position: relative; }
+  .breakdown-head { display: flex; justify-content: space-between; gap: 8px; font-size: .85rem; margin-bottom: 6px; }
+  .breakdown-head strong { font-variant-numeric: tabular-nums; }
+  .stack-bar { display: flex; gap: 2px; height: 22px; border-radius: 4px; overflow: hidden; background: #eee; }
+  .seg { height: 100%; width: 0; transition: width 1s ease; cursor: default; }
+  .seg[hidden] { display: none; }
+  .seg-bonus { background: var(--chart-bonus); }
+  .seg-spu { background: var(--chart-spu); }
+  .legend { display: flex; flex-wrap: wrap; gap: 4px 16px; margin-top: 6px; font-size: .82rem; color: var(--muted); }
+  .legend span { display: inline-flex; align-items: center; gap: 6px; font-variant-numeric: tabular-nums; }
+  .legend i { width: 10px; height: 10px; border-radius: 2px; display: inline-block; }
+  .legend b { color: var(--ink); font-weight: 600; }
+  .chart-tip {
+    position: absolute; top: 0; transform: translate(-50%, -100%);
+    background: var(--ink); color: #fff; font-size: .78rem; padding: 4px 8px; border-radius: 6px;
+    white-space: nowrap; pointer-events: none; opacity: 0; transition: opacity .15s;
+  }
+  .chart-tip.show { opacity: 1; }
 
   /* 倍率メーター */
   .meter { display: grid; grid-template-columns: repeat(10, 1fr); gap: 4px; margin-top: 16px; }
@@ -171,6 +208,18 @@
       <div class="stat main"><div class="label">実質の還元率</div><div class="value" id="effectiveRate">0<small>%</small></div></div>
       <div class="stat"><div class="label">実質の支払い額</div><div class="value" id="effectivePaid">0<small>円</small></div></div>
     </div>
+    <div class="breakdown">
+      <div class="breakdown-head"><span>ポイントの内訳</span><strong id="breakdownTotal">合計 0 pt</strong></div>
+      <div class="stack-bar" id="stackBar" role="img" aria-label="ポイントの内訳">
+        <div class="seg seg-bonus" id="segBonus" data-label="マラソン特典"></div>
+        <div class="seg seg-spu" id="segSpu" data-label="SPUなど"></div>
+      </div>
+      <div class="legend">
+        <span><i style="background:var(--chart-bonus)"></i>マラソン特典 <b id="legendBonus">0 pt</b></span>
+        <span><i style="background:var(--chart-spu)"></i>SPUなど <b id="legendSpu">0 pt</b></span>
+      </div>
+      <div class="chart-tip" id="chartTip"></div>
+    </div>
     <div class="meter" id="meter" aria-hidden="true"></div>
     <ul class="notes" id="notes"></ul>
   </section>
@@ -239,6 +288,8 @@
   const TAX_RATE_REDUCED = 0.08;        // 軽減税率（食品など）
   const DEFAULT_SHOP_ROWS = 3;          // 最初に表示する入力行の数
   const AMOUNT_STEP = 1000;             // 金額欄の矢印ボタンで増減する単位（円）
+  const COUNT_UP_DURATION_MS = 1000;     // 数字のカウントアップにかける時間（ミリ秒）
+  const RATE_DECIMALS = 1;              // 還元率の小数点以下の桁数
 
   // サンプルデータ
   const SAMPLE_SHOPS = [
@@ -298,18 +349,63 @@
   }
 
   // ===== 表示 =====
+
+  // 数字が変わったときに、カウントアップしながら枠を光らせる
+  const previousValues = {};
+  const animationFrames = {};
+  const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  function formatStat(value, decimals) {
+    return decimals > 0 ? value.toFixed(decimals) : formatNumber(value);
+  }
+
+  function updateStat(id, value, unit, decimals = 0) {
+    const el = $(id);
+    const from = previousValues[id];
+    previousValues[id] = value;
+    const draw = (v) => { el.innerHTML = `${formatStat(v, decimals)}<small>${unit}</small>`; };
+
+    // 初回表示や値が同じときはそのまま表示
+    if (from === undefined || formatStat(from, decimals) === formatStat(value, decimals)) {
+      draw(value);
+      return;
+    }
+
+    // 枠のハイライト（増えたか減ったかで色を変える）
+    const stat = el.closest('.stat');
+    stat.classList.remove('changed-up', 'changed-down');
+    void stat.offsetWidth; // アニメーションを最初からやり直すため
+    stat.classList.add(value > from ? 'changed-up' : 'changed-down');
+
+    if (prefersReducedMotion) {
+      draw(value);
+      return;
+    }
+
+    // カウントアップ（途中で次の変更が来たら前の動きは止める）
+    cancelAnimationFrame(animationFrames[id]);
+    const start = performance.now();
+    const step = (now) => {
+      const progress = Math.min((now - start) / COUNT_UP_DURATION_MS, 1);
+      const eased = 1 - Math.pow(1 - progress, 3); // だんだんゆっくりになる動き
+      draw(from + (value - from) * eased);
+      if (progress < 1) animationFrames[id] = requestAnimationFrame(step);
+    };
+    animationFrames[id] = requestAnimationFrame(step);
+  }
+
   function renderResult() {
     const r = calculate();
 
-    $('shopCount').innerHTML = `${r.shopCount}<small>店舗</small>`;
-    $('multiplier').innerHTML = `${r.multiplier}<small>倍</small>`;
-    $('bonusPoints').innerHTML = `${formatNumber(r.bonusPoints)}<small>pt</small>`;
-    $('normalPoints').innerHTML = `${formatNumber(r.normalPoints)}<small>pt</small>`;
-    $('totalPoints').innerHTML = `${formatNumber(r.totalPoints)}<small>pt</small>`;
-    $('totalPaid').innerHTML = `${formatNumber(r.totalPaid)}<small>円</small>`;
     const effectiveRate = r.totalPaid > 0 ? (r.totalPoints / r.totalPaid) * PERCENT : 0;
-    $('effectiveRate').innerHTML = `${effectiveRate.toFixed(1)}<small>%</small>`;
-    $('effectivePaid').innerHTML = `${formatNumber(r.totalPaid - r.totalPoints)}<small>円</small>`;
+    updateStat('shopCount', r.shopCount, '店舗');
+    updateStat('multiplier', r.multiplier, '倍');
+    updateStat('bonusPoints', r.bonusPoints, 'pt');
+    updateStat('normalPoints', r.normalPoints, 'pt');
+    updateStat('totalPoints', r.totalPoints, 'pt');
+    updateStat('totalPaid', r.totalPaid, '円');
+    updateStat('effectiveRate', effectiveRate, '%', RATE_DECIMALS);
+    updateStat('effectivePaid', r.totalPaid - r.totalPoints, '円');
 
     // 倍率メーター
     $('meter').innerHTML = Array.from({ length: MAX_MULTIPLIER }, (_, i) =>
@@ -329,7 +425,27 @@
     });
 
     renderCapBanner(r);
+    renderBreakdown(r);
     renderNotes(r);
+  }
+
+  // ポイントの内訳を積み上げ棒グラフで表示
+  function renderBreakdown(r) {
+    const share = (points) => (r.totalPoints > 0 ? (points / r.totalPoints) * PERCENT : 0);
+    const parts = [
+      { el: $('segBonus'), legend: $('legendBonus'), points: r.bonusPoints },
+      { el: $('segSpu'), legend: $('legendSpu'), points: r.normalPoints },
+    ];
+    parts.forEach(({ el, legend, points }) => {
+      const percent = share(points);
+      el.hidden = points === 0;
+      el.style.width = `${percent}%`;
+      el.dataset.text = `${el.dataset.label} ${formatNumber(points)} pt（${Math.round(percent)}%）`;
+      legend.textContent = `${formatNumber(points)} pt（${Math.round(percent)}%）`;
+    });
+    $('breakdownTotal').textContent = `合計 ${formatNumber(r.totalPoints)} pt`;
+    $('stackBar').setAttribute('aria-label',
+      `ポイントの内訳：マラソン特典 ${formatNumber(r.bonusPoints)}pt、SPUなど ${formatNumber(r.normalPoints)}pt`);
   }
 
   // 上限ポイントまでの進み具合と完走表示
@@ -436,6 +552,19 @@
   });
 
   $('spuRate').addEventListener('input', renderResult);
+
+  // グラフにマウスを乗せたときの吹き出し
+  $('stackBar').addEventListener('mousemove', (e) => {
+    const seg = e.target.closest('.seg');
+    const tip = $('chartTip');
+    if (!seg) { tip.classList.remove('show'); return; }
+    const box = $('stackBar').parentElement.getBoundingClientRect();
+    tip.textContent = seg.dataset.text;
+    tip.style.left = `${e.clientX - box.left}px`;
+    tip.style.top = `${$('stackBar').offsetTop - 6}px`;
+    tip.classList.add('show');
+  });
+  $('stackBar').addEventListener('mouseleave', () => $('chartTip').classList.remove('show'));
 
   // 初期表示
   shops = Array.from({ length: DEFAULT_SHOP_ROWS }, () => createShop());
