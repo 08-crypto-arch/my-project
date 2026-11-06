@@ -161,6 +161,33 @@
   .progress-bar { height: 100%; width: 0; background: #ffd84d; border-radius: 999px; transition: width .4s ease; }
   .progress-text { display: flex; justify-content: space-between; gap: 8px; margin-top: 6px; font-size: .85rem; font-variant-numeric: tabular-nums; }
 
+  /* 特典ptの横の注意マーク */
+  .cap-info-btn {
+    margin-left: 4px; width: 28px; height: 28px; border-radius: 50%;
+    border: none; background: none; color: var(--warn); cursor: pointer;
+    font-size: .9rem; line-height: 1; vertical-align: middle;
+  }
+  .cap-info-btn:hover { background: var(--warn-soft); }
+  .cap-info-btn[hidden] { display: none; }
+  .cap-info-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+
+  /* 注意のポップアップ */
+  .cap-popover {
+    position: absolute; z-index: 20; width: min(300px, calc(100vw - 16px));
+    background: #fff; border: 1px solid var(--line); border-radius: 12px;
+    box-shadow: 0 6px 24px rgba(0,0,0,.15); padding: 14px 16px; font-size: .85rem;
+    animation: pop .25s ease;
+  }
+  .cap-popover:focus { outline: none; }
+  .cap-popover p { margin: 0 0 8px; }
+  .cap-popover p:last-child { margin-bottom: 0; }
+  .cap-popover-title { font-weight: 700; color: var(--warn); padding-right: 28px; }
+  .cap-popover-status { background: var(--warn-soft); color: var(--warn); border-radius: 8px; padding: 8px 10px; }
+  .cap-popover-close {
+    position: absolute; top: 6px; right: 6px; width: 32px; height: 32px;
+    border: none; background: none; color: var(--muted); cursor: pointer; font-size: 1rem;
+  }
+
   /* スクロールしたときに画面の上に出る細いバー */
   .mini-cap {
     position: fixed; top: 0; left: 0; right: 0; z-index: 10;
@@ -215,6 +242,14 @@
     <h1>🏃 お買い物マラソン シミュレーター</h1>
     <p>買う予定のショップを入力すると、ポイント倍率ともらえるポイントの目安を計算します。</p>
   </header>
+
+  <!-- 特典ポイントの上限についての注意ポップアップ -->
+  <div class="cap-popover" id="capPopover" role="dialog" aria-labelledby="capPopoverTitle" tabindex="-1" hidden>
+    <button type="button" class="cap-popover-close" id="capPopoverClose" aria-label="閉じる">✕</button>
+    <p class="cap-popover-title" id="capPopoverTitle">⚠ 上限7,000ptに注意</p>
+    <p>マラソンの特典ポイントは、すべてのショップの<strong>合計で7,000ptまで</strong>です。合計が7,000ptを超えた分はもらえないので、注意してください。</p>
+    <p class="cap-popover-status" id="capPopoverStatus"></p>
+  </div>
 
   <!-- スクロール時に上に固定する細いバー（画面の読み上げは大きいバナー側で行う） -->
   <div class="mini-cap" id="miniCap" aria-hidden="true">
@@ -338,6 +373,7 @@
   const AMOUNT_STEP = 1000;             // 金額欄の矢印ボタンで増減する単位（円）
   const COUNT_UP_DURATION_MS = 1000;     // 数字のカウントアップにかける時間（ミリ秒）
   const RATE_DECIMALS = 1;              // 還元率の小数点以下の桁数
+  const POPOVER_MARGIN = 8;             // ポップアップと画面の端・ボタンとのすき間（px）
 
   // サンプルデータ
   const SAMPLE_SHOPS = [
@@ -442,8 +478,11 @@
     animationFrames[id] = requestAnimationFrame(step);
   }
 
+  let latestResult = null; // 注意のポップアップで今の合計を出すために覚えておく
+
   function renderResult() {
     const r = calculate();
+    latestResult = r;
 
     const effectiveRate = r.totalPaid > 0 ? (r.totalPoints / r.totalPaid) * PERCENT : 0;
     updateStat('shopCount', r.shopCount, '店舗');
@@ -470,8 +509,11 @@
           : `<span class="badge no">あと${formatNumber(MIN_PURCHASE_PER_SHOP - item.amountValue)}円</span>`;
       row.querySelector('.judge').innerHTML = badge;
       row.querySelector('.bonus').textContent = `${formatNumber(item.bonus)} pt`;
+      // 注意マークは、特典の合計が上限を超えたときだけ出す
+      row.querySelector('.cap-info-btn').hidden = r.rawBonus <= BONUS_POINT_CAP;
     });
 
+    if (r.rawBonus <= BONUS_POINT_CAP) closeCapPopover(); // 上限内に戻ったら注意も閉じる
     renderCapBanner(r);
     renderBreakdown(r);
     renderNotes(r);
@@ -569,7 +611,10 @@
           </select>
         </td>
         <td class="judge" data-label="判定"></td>
-        <td class="num bonus" data-label="特典pt"></td>
+        <td class="num" data-label="特典pt">
+          <span class="bonus"></span>
+          <button type="button" class="cap-info-btn" aria-label="特典ポイントの上限について" aria-haspopup="dialog">⚠</button>
+        </td>
         <td><button class="btn icon" data-remove="${shop.id}" aria-label="このショップを削除">✕</button></td>
       </tr>`).join('');
     renderResult();
@@ -587,6 +632,44 @@
     const shop = shops.find((s) => s.id === Number(row.dataset.id));
     shop[field] = field === 'taxRate' ? Number(e.target.value) : e.target.value;
     renderResult();
+  });
+
+  // ===== 特典ポイントの上限についての注意ポップアップ =====
+  function openCapPopover(button) {
+    const popover = $('capPopover');
+    const r = latestResult;
+    $('capPopoverStatus').innerHTML =
+      `今の計算では合計 <strong>${formatNumber(r.rawBonus)} pt</strong> なので、<strong>${formatNumber(r.rawBonus - BONUS_POINT_CAP)} pt</strong> 分はもらえません。`;
+
+    popover.hidden = false;
+    // ボタンの下に表示し、画面の端からはみ出さないように位置を調整
+    const rect = button.getBoundingClientRect();
+    const width = popover.offsetWidth;
+    const left = Math.min(Math.max(POPOVER_MARGIN, rect.right - width), window.innerWidth - width - POPOVER_MARGIN);
+    popover.style.left = `${left + window.scrollX}px`;
+    popover.style.top = `${rect.bottom + window.scrollY + POPOVER_MARGIN}px`;
+    popover.focus();
+    activeInfoButton = button;
+  }
+
+  function closeCapPopover() {
+    if ($('capPopover').hidden) return;
+    $('capPopover').hidden = true;
+    activeInfoButton?.focus();
+    activeInfoButton = null;
+  }
+
+  let activeInfoButton = null;
+  $('capPopoverClose').addEventListener('click', closeCapPopover);
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeCapPopover(); });
+  document.addEventListener('click', (e) => {
+    const infoButton = e.target.closest('.cap-info-btn');
+    if (infoButton) {
+      if (activeInfoButton === infoButton) { closeCapPopover(); return; }
+      openCapPopover(infoButton);
+      return;
+    }
+    if (!e.target.closest('#capPopover')) closeCapPopover();
   });
 
   $('shopRows').addEventListener('click', (e) => {
