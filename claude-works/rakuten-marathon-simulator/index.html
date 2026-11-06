@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>お買い物マラソン シミュレーター</title>
+<style>
+  :root {
+    --accent: #bf0000;
+    --accent-soft: #fdecec;
+    --ink: #222;
+    --muted: #6b6b6b;
+    --line: #e5e1dc;
+    --bg: #faf7f4;
+    --card: #fff;
+    --ok: #1f8a4c;
+    --ok-soft: #e6f4ec;
+    --warn: #b26a00;
+    --warn-soft: #fff3df;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: "Hiragino Sans", "Noto Sans JP", "Yu Gothic UI", sans-serif;
+    background: var(--bg);
+    color: var(--ink);
+    line-height: 1.6;
+  }
+  .wrap { max-width: 880px; margin: 0 auto; padding: 24px 16px 48px; }
+  header h1 { font-size: 1.5rem; margin: 0 0 4px; }
+  header p { margin: 0; color: var(--muted); font-size: .9rem; }
+
+  .card {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    padding: 20px;
+    margin-top: 16px;
+  }
+  .card h2 { font-size: 1.05rem; margin: 0 0 12px; }
+
+  /* 結果サマリー */
+  .summary { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 12px; }
+  .stat { background: var(--bg); border-radius: 10px; padding: 12px 14px; }
+  .stat .label { font-size: .78rem; color: var(--muted); }
+  .stat .value { font-size: 1.5rem; font-weight: 700; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .stat .value small { font-size: .85rem; font-weight: 500; margin-left: 2px; }
+  .stat.main { background: var(--accent-soft); }
+  .stat.main .value { color: var(--accent); }
+
+  /* 倍率メーター */
+  .meter { display: grid; grid-template-columns: repeat(10, 1fr); gap: 4px; margin-top: 16px; }
+  .meter span {
+    height: 34px; border-radius: 6px; background: #eee;
+    display: grid; place-items: center; font-size: .78rem; color: var(--muted); font-weight: 600;
+  }
+  .meter span.on { background: var(--accent); color: #fff; }
+
+  .notes { margin: 14px 0 0; padding: 0; list-style: none; display: grid; gap: 8px; }
+  .notes li { padding: 10px 12px; border-radius: 8px; font-size: .9rem; }
+  .notes .info { background: var(--ok-soft); color: var(--ok); }
+  .notes .warn { background: var(--warn-soft); color: var(--warn); }
+
+  /* 入力フォーム */
+  .settings { display: flex; flex-wrap: wrap; gap: 16px; align-items: end; }
+  label.field { display: grid; gap: 4px; font-size: .82rem; color: var(--muted); }
+  input, select {
+    font: inherit; font-size: 1rem; color: var(--ink);
+    border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; background: #fff;
+    min-width: 0;
+  }
+  input:focus, select:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
+
+  table { width: 100%; border-collapse: collapse; }
+  th { text-align: left; font-size: .78rem; color: var(--muted); font-weight: 500; padding: 0 6px 6px; }
+  td { padding: 6px; border-top: 1px solid var(--line); vertical-align: middle; }
+  td input, td select { width: 100%; }
+  td.num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .badge { display: inline-block; font-size: .72rem; padding: 2px 8px; border-radius: 999px; white-space: nowrap; }
+  .badge.yes { background: var(--ok-soft); color: var(--ok); }
+  .badge.no { background: #eee; color: var(--muted); }
+
+  .btn {
+    font: inherit; font-size: .92rem; border-radius: 8px; padding: 8px 14px; cursor: pointer;
+    border: 1px solid var(--accent); background: var(--accent); color: #fff;
+  }
+  .btn.ghost { background: #fff; color: var(--accent); }
+  .btn.icon { border: none; background: none; color: var(--muted); padding: 6px 8px; font-size: 1.1rem; }
+  .btn.icon:hover { color: var(--accent); }
+  .actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+
+  /* 上限ポイントのバナー */
+  .cap-banner {
+    margin-top: 16px; border-radius: 16px; padding: 20px;
+    background: linear-gradient(135deg, var(--accent), #e23a3a); color: #fff;
+  }
+  .cap-banner .cap-label { font-size: .85rem; opacity: .9; }
+  .cap-banner .cap-value { font-size: 2.4rem; font-weight: 800; line-height: 1.2; font-variant-numeric: tabular-nums; }
+  .cap-banner .cap-value small { font-size: 1rem; font-weight: 600; margin-left: 4px; }
+  .cap-banner .cap-sub { font-size: .82rem; opacity: .9; }
+  .progress { margin-top: 14px; height: 14px; border-radius: 999px; background: rgba(255,255,255,.3); overflow: hidden; }
+  .progress-bar { height: 100%; width: 0; background: #ffd84d; border-radius: 999px; transition: width .4s ease; }
+  .progress-text { display: flex; justify-content: space-between; gap: 8px; margin-top: 6px; font-size: .85rem; font-variant-numeric: tabular-nums; }
+
+  /* 完走メッセージ */
+  .finish {
+    display: none; margin-top: 14px; padding: 14px 16px; border-radius: 12px;
+    background: #fff; color: var(--accent); text-align: center;
+    font-size: 1.25rem; font-weight: 800;
+    animation: pop .5s ease;
+  }
+  .finish small { display: block; font-size: .8rem; font-weight: 500; color: var(--muted); margin-top: 2px; }
+  .cap-banner.finished .finish { display: block; }
+  .cap-banner.finished .progress-bar { background: #ffe680; }
+  @keyframes pop {
+    0% { transform: scale(.8); opacity: 0; }
+    70% { transform: scale(1.05); opacity: 1; }
+    100% { transform: scale(1); }
+  }
+
+  .rules { font-size: .85rem; color: var(--muted); }
+  .rules ul { margin: 0; padding-left: 1.2em; }
+  footer { margin-top: 20px; font-size: .78rem; color: var(--muted); }
+
+  /* スマホでは表をカード型に */
+  @media (max-width: 640px) {
+    thead { display: none; }
+    tr { display: grid; grid-template-columns: 1fr 1fr; gap: 6px 10px; padding: 12px 0; border-top: 1px solid var(--line); }
+    td { border: none; padding: 0; }
+    td[data-label]::before { content: attr(data-label); display: block; font-size: .72rem; color: var(--muted); }
+    td.shop-name { grid-column: 1 / -1; }
+    td.num { text-align: left; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>🏃 お買い物マラソン シミュレーター</h1>
+    <p>買う予定のショップを入力すると、ポイント倍率ともらえるポイントの目安を計算します。</p>
+  </header>
+
+  <!-- 獲得上限ポイント -->
+  <section class="cap-banner" id="capBanner" aria-live="polite">
+    <div class="cap-label">獲得上限ポイント数（期間限定ポイント）</div>
+    <div class="cap-value">7,000<small>ポイント</small></div>
+    <div class="cap-sub">ショップ買いまわりの特典ポイントの上限です</div>
+    <div class="progress" role="progressbar" aria-label="上限までの達成度" aria-valuemin="0" aria-valuemax="100" id="capProgress">
+      <div class="progress-bar" id="capProgressBar"></div>
+    </div>
+    <div class="progress-text">
+      <span id="capCurrent">0 / 7,000 pt</span>
+      <span id="capRemaining">あと 7,000 pt</span>
+    </div>
+    <div class="finish">
+      🏁 楽天マラソン 完走おめでとうございます！ 🎉
+      <small>特典ポイントが上限の7,000ptに到達しました</small>
+    </div>
+  </section>
+
+  <!-- 結果 -->
+  <section class="card" aria-live="polite">
+    <h2>シミュレーション結果</h2>
+    <div class="summary">
+      <div class="stat"><div class="label">買いまわり店舗数</div><div class="value" id="shopCount">0<small>店舗</small></div></div>
+      <div class="stat"><div class="label">ポイント倍率</div><div class="value" id="multiplier">1<small>倍</small></div></div>
+      <div class="stat"><div class="label">マラソン特典ポイント</div><div class="value" id="bonusPoints">0<small>pt</small></div></div>
+      <div class="stat"><div class="label">SPUなどのポイント</div><div class="value" id="normalPoints">0<small>pt</small></div></div>
+      <div class="stat main"><div class="label">もらえるポイント合計</div><div class="value" id="totalPoints">0<small>pt</small></div></div>
+      <div class="stat"><div class="label">支払い合計（税込）</div><div class="value" id="totalPaid">0<small>円</small></div></div>
+      <div class="stat main"><div class="label">実質の還元率</div><div class="value" id="effectiveRate">0<small>%</small></div></div>
+      <div class="stat"><div class="label">実質の支払い額</div><div class="value" id="effectivePaid">0<small>円</small></div></div>
+    </div>
+    <div class="meter" id="meter" aria-hidden="true"></div>
+    <ul class="notes" id="notes"></ul>
+  </section>
+
+  <!-- 設定 -->
+  <section class="card">
+    <h2>あなたのふだんのポイント倍率</h2>
+    <div class="settings">
+      <label class="field">SPU倍率（通常の1倍を含む）
+        <input type="number" id="spuRate" min="1" max="30" step="0.5" value="1" style="width:120px">
+      </label>
+      <p style="margin:0;font-size:.82rem;color:var(--muted);flex:1;min-width:200px">
+        楽天カード利用などで上がる倍率です。わからなければ「1」のままでOK。マラソン特典とは別に計算します。
+      </p>
+    </div>
+  </section>
+
+  <!-- 買い物リスト -->
+  <section class="card">
+    <h2>買う予定のショップ</h2>
+    <table>
+      <thead>
+        <tr>
+          <th style="width:30%">ショップ名</th>
+          <th style="width:20%">金額（税込・クーポン後）</th>
+          <th style="width:14%">税率</th>
+          <th>判定</th>
+          <th class="num">特典pt</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody id="shopRows"></tbody>
+    </table>
+    <div class="actions">
+      <button class="btn" id="addShop">＋ ショップを追加</button>
+      <button class="btn ghost" id="fillSample">サンプルを入れる</button>
+      <button class="btn ghost" id="clearAll">すべてクリア</button>
+    </div>
+  </section>
+
+  <!-- ルール -->
+  <section class="card rules">
+    <h2 style="color:var(--ink)">計算のルール（2026年10月開催分より）</h2>
+    <ul>
+      <li>1ショップでの合計が <strong>1,000円（税込・送料別・クーポン適用後）以上</strong> で1店舗としてカウント。同じショップでの複数回の購入は合算されます。</li>
+      <li>店舗数に応じて倍率が上がり、<strong>最大10倍</strong>（11店舗以上も10倍）。</li>
+      <li>特典ポイントは通常の1倍分を除いた「倍率 − 1」%分。<strong>税抜金額</strong>に対して付きます。</li>
+      <li>特典ポイントの上限は <strong>7,000ポイント</strong>（期間限定ポイント）。</li>
+      <li>エントリーが必要です。エントリー前のお買い物も対象になります。</li>
+    </ul>
+  </section>
+
+  <footer>
+    ※ このツールの計算結果はあくまで目安です。実際のポイントは、ポイントの端数処理・対象外の商品やサービス・キャンセルなどにより異なる場合があります。最新のルールは必ず楽天市場の公式キャンペーンページで確認してください。
+  </footer>
+</div>
+
+<script>
+  // ===== キャンペーンのルール（定数） =====
+  const MIN_PURCHASE_PER_SHOP = 1000;   // 1店舗としてカウントされる最低金額（税込）
+  const MAX_MULTIPLIER = 10;            // 最大倍率
+  const BASE_MULTIPLIER = 1;            // 通常分の倍率（特典からは除かれる）
+  const BONUS_POINT_CAP = 7000;         // 特典ポイントの上限
+  const PERCENT = 100;
+  const TAX_RATE_STANDARD = 0.10;       // 標準税率
+  const TAX_RATE_REDUCED = 0.08;        // 軽減税率（食品など）
+  const DEFAULT_SHOP_ROWS = 3;          // 最初に表示する入力行の数
+  const AMOUNT_STEP = 1000;             // 金額欄の矢印ボタンで増減する単位（円）
+
+  // サンプルデータ
+  const SAMPLE_SHOPS = [
+    { name: 'お米のお店', amount: 4980, taxRate: TAX_RATE_REDUCED },
+    { name: '日用品ショップ', amount: 2380, taxRate: TAX_RATE_STANDARD },
+    { name: 'コスメ公式ストア', amount: 3300, taxRate: TAX_RATE_STANDARD },
+    { name: 'ふるさとの果物屋', amount: 3980, taxRate: TAX_RATE_REDUCED },
+    { name: '本屋さん', amount: 1540, taxRate: TAX_RATE_STANDARD },
+    { name: 'お菓子のお店', amount: 980, taxRate: TAX_RATE_REDUCED },
+  ];
+
+  // ===== 状態 =====
+  let shops = [];
+  let nextId = 1;
+
+  const $ = (id) => document.getElementById(id);
+  const formatNumber = (n) => Math.floor(n).toLocaleString('ja-JP');
+
+  function createShop(data = {}) {
+    return { id: nextId++, name: data.name ?? '', amount: data.amount ?? '', taxRate: data.taxRate ?? TAX_RATE_STANDARD };
+  }
+
+  // 税込金額から税抜金額を求める
+  function toTaxExcluded(amount, taxRate) {
+    return Math.floor(amount / (1 + taxRate));
+  }
+
+  // ===== 計算 =====
+  function calculate() {
+    const spuRate = Math.max(BASE_MULTIPLIER, Number($('spuRate').value) || BASE_MULTIPLIER);
+
+    const items = shops.map((shop) => {
+      const amount = Math.max(0, Number(shop.amount) || 0);
+      return {
+        ...shop,
+        amountValue: amount,
+        taxExcluded: toTaxExcluded(amount, shop.taxRate),
+        counts: amount >= MIN_PURCHASE_PER_SHOP,
+      };
+    });
+
+    const shopCount = items.filter((item) => item.counts).length;
+    const multiplier = Math.min(Math.max(shopCount, BASE_MULTIPLIER), MAX_MULTIPLIER);
+    const bonusRate = (multiplier - BASE_MULTIPLIER) / PERCENT;
+
+    // ショップごとの特典ポイント（上限前）
+    items.forEach((item) => { item.bonus = Math.floor(item.taxExcluded * bonusRate); });
+    const rawBonus = items.reduce((sum, item) => sum + item.bonus, 0);
+    const bonusPoints = Math.min(rawBonus, BONUS_POINT_CAP);
+
+    const normalPoints = items.reduce((sum, item) => sum + Math.floor(item.taxExcluded * spuRate / PERCENT), 0);
+    const totalPaid = items.reduce((sum, item) => sum + item.amountValue, 0);
+    const totalTaxExcluded = items.reduce((sum, item) => sum + item.taxExcluded, 0);
+    const totalPoints = bonusPoints + normalPoints;
+
+    return { items, shopCount, multiplier, bonusRate, rawBonus, bonusPoints, normalPoints, totalPaid, totalTaxExcluded, totalPoints };
+  }
+
+  // ===== 表示 =====
+  function renderResult() {
+    const r = calculate();
+
+    $('shopCount').innerHTML = `${r.shopCount}<small>店舗</small>`;
+    $('multiplier').innerHTML = `${r.multiplier}<small>倍</small>`;
+    $('bonusPoints').innerHTML = `${formatNumber(r.bonusPoints)}<small>pt</small>`;
+    $('normalPoints').innerHTML = `${formatNumber(r.normalPoints)}<small>pt</small>`;
+    $('totalPoints').innerHTML = `${formatNumber(r.totalPoints)}<small>pt</small>`;
+    $('totalPaid').innerHTML = `${formatNumber(r.totalPaid)}<small>円</small>`;
+    const effectiveRate = r.totalPaid > 0 ? (r.totalPoints / r.totalPaid) * PERCENT : 0;
+    $('effectiveRate').innerHTML = `${effectiveRate.toFixed(1)}<small>%</small>`;
+    $('effectivePaid').innerHTML = `${formatNumber(r.totalPaid - r.totalPoints)}<small>円</small>`;
+
+    // 倍率メーター
+    $('meter').innerHTML = Array.from({ length: MAX_MULTIPLIER }, (_, i) =>
+      `<span class="${i < r.multiplier ? 'on' : ''}">${i + 1}倍</span>`).join('');
+
+    // 各行の判定と特典ポイント
+    r.items.forEach((item) => {
+      const row = document.querySelector(`tr[data-id="${item.id}"]`);
+      if (!row) return;
+      const badge = item.amountValue === 0
+        ? '<span class="badge no">未入力</span>'
+        : item.counts
+          ? '<span class="badge yes">カウント対象</span>'
+          : `<span class="badge no">あと${formatNumber(MIN_PURCHASE_PER_SHOP - item.amountValue)}円</span>`;
+      row.querySelector('.judge').innerHTML = badge;
+      row.querySelector('.bonus').textContent = `${formatNumber(item.bonus)} pt`;
+    });
+
+    renderCapBanner(r);
+    renderNotes(r);
+  }
+
+  // 上限ポイントまでの進み具合と完走表示
+  function renderCapBanner(r) {
+    const progress = Math.min(r.bonusPoints / BONUS_POINT_CAP, 1) * PERCENT;
+    const finished = r.rawBonus >= BONUS_POINT_CAP;
+    $('capProgressBar').style.width = `${progress}%`;
+    $('capProgress').setAttribute('aria-valuenow', Math.floor(progress));
+    $('capCurrent').textContent = `${formatNumber(r.bonusPoints)} / ${formatNumber(BONUS_POINT_CAP)} pt`;
+    $('capRemaining').textContent = finished ? '上限達成！' : `あと ${formatNumber(BONUS_POINT_CAP - r.bonusPoints)} pt`;
+    $('capBanner').classList.toggle('finished', finished);
+  }
+
+  // アドバイスの表示
+  function renderNotes(r) {
+    const notes = [];
+
+    if (r.shopCount < MAX_MULTIPLIER) {
+      const nextMultiplier = Math.max(r.shopCount, BASE_MULTIPLIER) + 1;
+      const shopsNeeded = nextMultiplier - r.shopCount;
+      const nextBonus = Math.min(Math.floor(r.totalTaxExcluded * (nextMultiplier - BASE_MULTIPLIER) / PERCENT), BONUS_POINT_CAP);
+      notes.push({ type: 'info', text: `あと${shopsNeeded}店舗（各1,000円以上）で${nextMultiplier}倍に！今の買い物だけでも特典が約${formatNumber(nextBonus - r.bonusPoints)}pt増えます（追加分の買い物のポイントは別）。` });
+    } else {
+      notes.push({ type: 'info', text: '最大の10倍を達成しています 🎉 これ以上店舗を増やしても倍率は変わりません。' });
+    }
+
+    if (r.rawBonus > BONUS_POINT_CAP) {
+      notes.push({ type: 'warn', text: `特典ポイントが上限の7,000ptを超えています（計算上は${formatNumber(r.rawBonus)}pt）。超えた${formatNumber(r.rawBonus - BONUS_POINT_CAP)}pt分はもらえません。` });
+    } else if (r.bonusRate > 0) {
+      // 上限に届くまでの税抜金額 → 税込の目安（標準税率で換算）
+      const capTaxExcluded = Math.ceil(BONUS_POINT_CAP / r.bonusRate);
+      const remaining = Math.max(0, capTaxExcluded - r.totalTaxExcluded);
+      const remainingWithTax = Math.ceil(remaining * (1 + TAX_RATE_STANDARD));
+      notes.push({ type: 'info', text: `今の${r.multiplier}倍のままなら、あと約${formatNumber(remainingWithTax)}円（税込・10%換算）買うと特典が上限の7,000ptに届きます。` });
+    }
+
+    const smallShops = r.items.filter((item) => item.amountValue > 0 && !item.counts);
+    if (smallShops.length > 0) {
+      notes.push({ type: 'warn', text: `1,000円未満のショップが${smallShops.length}件あります。店舗数にはカウントされません（同じショップでの買い足しで1,000円以上にすればカウントされます）。` });
+    }
+
+    $('notes').innerHTML = notes.map((n) => `<li class="${n.type}">${n.text}</li>`).join('');
+  }
+
+  // 入力行を作り直す（行の追加・削除のときだけ呼ぶ）
+  function renderRows() {
+    $('shopRows').innerHTML = shops.map((shop, index) => `
+      <tr data-id="${shop.id}">
+        <td class="shop-name" data-label="ショップ名">
+          <input type="text" data-field="name" placeholder="ショップ${index + 1}" value="${escapeHtml(shop.name)}" aria-label="ショップ名">
+        </td>
+        <td data-label="金額（税込・クーポン後）">
+          <input type="number" data-field="amount" min="0" step="${AMOUNT_STEP}" inputmode="numeric" placeholder="例：3000" value="${shop.amount}" aria-label="金額">
+        </td>
+        <td data-label="税率">
+          <select data-field="taxRate" aria-label="税率">
+            <option value="${TAX_RATE_STANDARD}" ${shop.taxRate === TAX_RATE_STANDARD ? 'selected' : ''}>10%</option>
+            <option value="${TAX_RATE_REDUCED}" ${shop.taxRate === TAX_RATE_REDUCED ? 'selected' : ''}>8%（食品）</option>
+          </select>
+        </td>
+        <td class="judge" data-label="判定"></td>
+        <td class="num bonus" data-label="特典pt"></td>
+        <td><button class="btn icon" data-remove="${shop.id}" aria-label="このショップを削除">✕</button></td>
+      </tr>`).join('');
+    renderResult();
+  }
+
+  function escapeHtml(text) {
+    return String(text).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  }
+
+  // ===== イベント =====
+  $('shopRows').addEventListener('input', (e) => {
+    const row = e.target.closest('tr');
+    const field = e.target.dataset.field;
+    if (!row || !field) return;
+    const shop = shops.find((s) => s.id === Number(row.dataset.id));
+    shop[field] = field === 'taxRate' ? Number(e.target.value) : e.target.value;
+    renderResult();
+  });
+
+  $('shopRows').addEventListener('click', (e) => {
+    const removeId = e.target.dataset.remove;
+    if (!removeId) return;
+    shops = shops.filter((s) => s.id !== Number(removeId));
+    renderRows();
+  });
+
+  $('addShop').addEventListener('click', () => {
+    shops.push(createShop());
+    renderRows();
+    const inputs = $('shopRows').querySelectorAll('input[data-field="name"]');
+    inputs[inputs.length - 1].focus();
+  });
+
+  $('fillSample').addEventListener('click', () => {
+    shops = SAMPLE_SHOPS.map(createShop);
+    renderRows();
+  });
+
+  $('clearAll').addEventListener('click', () => {
+    shops = Array.from({ length: DEFAULT_SHOP_ROWS }, () => createShop());
+    renderRows();
+  });
+
+  $('spuRate').addEventListener('input', renderResult);
+
+  // 初期表示
+  shops = Array.from({ length: DEFAULT_SHOP_ROWS }, () => createShop());
+  renderRows();
+</script>
+</body>
+</html>
