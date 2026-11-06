@@ -39,7 +39,29 @@
     padding: 20px;
     margin-top: 16px;
   }
-  .card h2 { font-size: 1.05rem; margin: 0 0 12px; }
+  .card h2 { font-size: 1.05rem; margin: 0; }
+
+  /* セクションの開閉 */
+  .card-head { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+  .toggle-btn {
+    flex: none; width: 40px; height: 40px; border-radius: 50%;
+    border: 1px solid var(--line); background: #fff; color: var(--muted);
+    display: grid; place-items: center; cursor: pointer; font-size: 1rem;
+    transition: background .2s, color .2s;
+  }
+  .toggle-btn:hover { color: var(--accent); border-color: var(--accent); }
+  .toggle-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .toggle-btn .chevron { display: inline-block; transition: transform .3s ease; }
+  .card.collapsed .toggle-btn .chevron { transform: rotate(-90deg); }
+  .card-body-wrap { display: grid; grid-template-rows: 1fr; transition: grid-template-rows .3s ease; }
+  .card.collapsed .card-body-wrap { grid-template-rows: 0fr; }
+  /* 光るアニメーションや入力欄の枠が切れないよう、少し余白を持たせて隠す */
+  .card-body { min-height: 0; overflow: hidden; padding: 12px 4px 4px; margin: 0 -4px -4px; }
+  .collapsed-hint { display: none; font-size: .82rem; color: var(--muted); font-variant-numeric: tabular-nums; }
+  .card.collapsed .collapsed-hint { display: inline; }
+  @media (prefers-reduced-motion: reduce) {
+    .card-body-wrap, .toggle-btn .chevron { transition: none; }
+  }
 
   /* 結果サマリー */
   .summary { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 12px; }
@@ -139,6 +161,23 @@
   .progress-bar { height: 100%; width: 0; background: #ffd84d; border-radius: 999px; transition: width .4s ease; }
   .progress-text { display: flex; justify-content: space-between; gap: 8px; margin-top: 6px; font-size: .85rem; font-variant-numeric: tabular-nums; }
 
+  /* スクロールしたときに画面の上に出る細いバー */
+  .mini-cap {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 10;
+    background: linear-gradient(135deg, var(--accent), #e23a3a); color: #fff;
+    box-shadow: 0 2px 8px rgba(0,0,0,.15);
+    transform: translateY(-100%); transition: transform .3s ease;
+  }
+  .mini-cap.show { transform: translateY(0); }
+  .mini-cap-inner {
+    max-width: 880px; margin: 0 auto; padding: 10px 16px;
+    display: flex; align-items: center; gap: 12px;
+    font-size: .85rem; font-weight: 600; font-variant-numeric: tabular-nums; white-space: nowrap;
+  }
+  .mini-cap .progress { flex: 1; margin-top: 0; height: 10px; min-width: 60px; }
+  .mini-cap.finished .progress-bar { background: #ffe680; }
+  @media (prefers-reduced-motion: reduce) { .mini-cap { transition: none; } }
+
   /* 完走メッセージ */
   .finish {
     display: none; margin-top: 14px; padding: 14px 16px; border-radius: 12px;
@@ -177,6 +216,15 @@
     <p>買う予定のショップを入力すると、ポイント倍率ともらえるポイントの目安を計算します。</p>
   </header>
 
+  <!-- スクロール時に上に固定する細いバー（画面の読み上げは大きいバナー側で行う） -->
+  <div class="mini-cap" id="miniCap" aria-hidden="true">
+    <div class="mini-cap-inner">
+      <span>上限 7,000pt</span>
+      <div class="progress"><div class="progress-bar" id="miniCapBar"></div></div>
+      <span id="miniCapRemaining">あと 7,000 pt</span>
+    </div>
+  </div>
+
   <!-- 獲得上限ポイント -->
   <section class="cap-banner" id="capBanner" aria-live="polite">
     <div class="cap-label">獲得上限ポイント数（期間限定ポイント）</div>
@@ -196,7 +244,7 @@
   </section>
 
   <!-- 結果 -->
-  <section class="card" aria-live="polite">
+  <section class="card" id="resultCard" aria-live="polite">
     <h2>シミュレーション結果</h2>
     <div class="summary">
       <div class="stat"><div class="label">買いまわり店舗数</div><div class="value" id="shopCount">0<small>店舗</small></div></div>
@@ -427,6 +475,7 @@
     renderCapBanner(r);
     renderBreakdown(r);
     renderNotes(r);
+    updateCollapsedHint(r);
   }
 
   // ポイントの内訳を積み上げ棒グラフで表示
@@ -457,6 +506,19 @@
     $('capCurrent').textContent = `${formatNumber(r.bonusPoints)} / ${formatNumber(BONUS_POINT_CAP)} pt`;
     $('capRemaining').textContent = finished ? '上限達成！' : `あと ${formatNumber(BONUS_POINT_CAP - r.bonusPoints)} pt`;
     $('capBanner').classList.toggle('finished', finished);
+
+    // 細い固定バーも同じ内容に合わせる
+    $('miniCapBar').style.width = `${progress}%`;
+    $('miniCapRemaining').textContent = finished ? '🏁 完走！' : `あと ${formatNumber(BONUS_POINT_CAP - r.bonusPoints)} pt`;
+    $('miniCap').classList.toggle('finished', finished);
+  }
+
+  // 大きいバナーが画面から見えなくなったら、細いバーを出す
+  function setupMiniCap() {
+    const observer = new IntersectionObserver(([entry]) => {
+      $('miniCap').classList.toggle('show', !entry.isIntersecting);
+    });
+    observer.observe($('capBanner'));
   }
 
   // アドバイスの表示
@@ -566,7 +628,59 @@
   });
   $('stackBar').addEventListener('mouseleave', () => $('chartTip').classList.remove('show'));
 
+  // ===== セクションの開閉 =====
+  // 各カードの見出しの右に開閉ボタンを付け、中身を折りたためるようにする
+  function setupCollapsibleCards() {
+    document.querySelectorAll('.card').forEach((card, index) => {
+      const heading = card.querySelector('h2');
+      const head = document.createElement('div');
+      head.className = 'card-head';
+
+      const titleGroup = document.createElement('div');
+      titleGroup.appendChild(heading);
+      // 閉じているときに見出しの下へ出す一言（結果カードはポイント合計）
+      const hint = document.createElement('span');
+      hint.className = 'collapsed-hint';
+      titleGroup.appendChild(hint);
+
+      const bodyId = `cardBody${index}`;
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.className = 'toggle-btn';
+      button.setAttribute('aria-controls', bodyId);
+      button.innerHTML = '<span class="chevron" aria-hidden="true">▼</span>';
+      head.append(titleGroup, button);
+
+      // 見出し以外の中身をまとめて包む
+      const wrap = document.createElement('div');
+      wrap.className = 'card-body-wrap';
+      const body = document.createElement('div');
+      body.className = 'card-body';
+      body.id = bodyId;
+      while (card.firstChild) body.appendChild(card.firstChild);
+      wrap.appendChild(body);
+      card.append(head, wrap);
+
+      const setOpen = (open) => {
+        card.classList.toggle('collapsed', !open);
+        body.inert = !open; // 閉じている中身にキーボードで移動しないように
+        button.setAttribute('aria-expanded', String(open));
+        button.setAttribute('aria-label', `${heading.textContent}を${open ? '閉じる' : '開く'}`);
+      };
+      button.addEventListener('click', () => setOpen(card.classList.contains('collapsed')));
+      setOpen(true);
+    });
+  }
+
+  // 閉じた結果カードにも、ポイント合計だけは見えるようにする
+  function updateCollapsedHint(r) {
+    const resultHint = document.querySelector('#resultCard .collapsed-hint');
+    if (resultHint) resultHint.textContent = `${r.multiplier}倍・合計 ${formatNumber(r.totalPoints)} pt`;
+  }
+
   // 初期表示
+  setupCollapsibleCards();
+  setupMiniCap();
   shops = Array.from({ length: DEFAULT_SHOP_ROWS }, () => createShop());
   renderRows();
 </script>
