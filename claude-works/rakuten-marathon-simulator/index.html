@@ -178,14 +178,19 @@
   .progress-bar { height: 100%; width: 0; background: #ffd84d; border-radius: 999px; transition: width .4s ease; }
   .progress-text { display: flex; justify-content: space-between; gap: 8px; margin-top: 6px; font-size: .85rem; font-variant-numeric: tabular-nums; }
 
-  /* シェア */
-  .share-note { margin: 0 0 8px; font-size: .82rem; color: var(--muted); }
-  .share-preview {
-    margin: 0; padding: 12px 14px; border-radius: 10px; background: var(--bg);
-    font-family: inherit; font-size: .88rem; white-space: pre-wrap; word-break: break-all;
+  /* フッターのシェアリンク */
+  .share-links { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 4px 10px; margin-bottom: 8px; }
+  .share-label { font-size: .85rem; color: var(--ink); font-weight: 600; }
+  .share-icon {
+    width: 44px; height: 44px; border-radius: 50%; border: 1px solid var(--line); background: #fff;
+    display: grid; place-items: center; cursor: pointer; padding: 0; transition: border-color .2s, transform .2s;
   }
-  .btn.share-x { background: #111; border-color: #111; text-decoration: none; display: inline-block; }
-  .copy-status { align-self: center; font-size: .85rem; color: var(--ok); font-weight: 600; }
+  .share-icon:hover { border-color: var(--ink); transform: translateY(-1px); }
+  .share-icon:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .share-icon img { display: block; object-fit: contain; }
+  /* 「コピーしました」はアイコンの下の行に出す（アイコンが中央からずれないように） */
+  .copy-status { flex-basis: 100%; min-height: 1.4em; text-align: center; font-size: .82rem; color: var(--ok); font-weight: 600; }
+  footer p { margin: 0; text-align: center; }
 
   /* 特典ptの横の注意マーク */
   .cap-info-btn {
@@ -335,18 +340,6 @@
     <ul class="notes" id="notes"></ul>
   </section>
 
-  <!-- シェア -->
-  <section class="card">
-    <h2>結果をシェアする</h2>
-    <p class="share-note">こんな文章でシェアされます（ショップ名や金額は入りません）</p>
-    <pre class="share-preview" id="sharePreview"></pre>
-    <div class="actions">
-      <a class="btn share-x" id="shareX" href="#" target="_blank" rel="noopener">𝕏 でポストする</a>
-      <button type="button" class="btn ghost" id="copyLink">🔗 リンクをコピー</button>
-      <span class="copy-status" id="copyStatus" role="status"></span>
-    </div>
-  </section>
-
   <!-- 設定 -->
   <section class="card">
     <h2>あなたのふだんのポイント倍率</h2>
@@ -409,7 +402,20 @@
   </section>
 
   <footer>
-    ※ 個人が作った非公式のツールです。楽天グループ株式会社とは関係ありません。計算結果はあくまで目安です。
+    <!-- シェア（Xには今の結果を入れた文章で投稿。ショップ名や金額は入れない）
+         アイコンは X 公式ロゴと「リンクのフリーアイコン3」を96pxに縮小し、どこでも表示されるよう埋め込んでいる -->
+
+    <div class="share-links">
+      <span class="share-label">シェアする</span>
+      <a class="share-icon" id="shareX" href="#" target="_blank" rel="noopener" aria-label="今の結果をXでポストする" title="Xでポストする">
+        <img src="data:image/png;base64,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" alt="" width="20" height="20">
+      </a>
+      <button type="button" class="share-icon" id="copyLink" aria-label="このページのリンクをコピー" title="リンクをコピー">
+        <img src="data:image/png;base64,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" alt="" width="22" height="22">
+      </button>
+      <span class="copy-status" id="copyStatus" role="status"></span>
+    </div>
+    <p>※ 個人が作った非公式のツールです。楽天グループ株式会社とは関係ありません。計算結果はあくまで目安です。</p>
   </footer>
 </div>
 
@@ -597,7 +603,6 @@
 
   function renderShare(r) {
     const text = buildShareText(r);
-    $('sharePreview').textContent = `${text}\n${SHARE_URL}`;
     const params = new URLSearchParams({ text, url: SHARE_URL });
     $('shareX').href = `https://x.com/intent/post?${params}`;
   }
