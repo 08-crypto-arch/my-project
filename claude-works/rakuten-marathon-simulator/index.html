@@ -4,6 +4,20 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>お買い物マラソン シミュレーター</title>
+<meta name="description" content="楽天市場のお買い物マラソンで、買いまわり店舗数・ポイント倍率・特典ポイントの目安をかんたんに計算できる無料のシミュレーター。あと何店舗？上限7,000ptまであといくら？がひと目で分かります。">
+
+<!-- OGP（URLを共有したときに表示されるカード） -->
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="お買い物マラソン シミュレーター">
+<meta property="og:title" content="お買い物マラソン シミュレーター｜あと何店舗？上限7,000ptまでひと目で">
+<meta property="og:description" content="買う予定のショップを入れるだけで、買いまわり店舗数・ポイント倍率・特典ポイントの目安を自動で計算。登録不要・スマホOKの無料ツール（非公式）です。">
+<meta property="og:url" content="https://08-crypto-arch.github.io/my-project/claude-works/rakuten-marathon-simulator/">
+<meta property="og:image" content="https://08-crypto-arch.github.io/my-project/claude-works/rakuten-marathon-simulator/ogp.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="お買い物マラソン シミュレーター">
+<meta property="og:locale" content="ja_JP">
+<meta name="twitter:card" content="summary_large_image">
 <style>
   :root {
     --accent: #bf0000;
@@ -32,6 +46,8 @@
   header h1 { font-size: 1.5rem; margin: 0 0 4px; }
   header p { margin: 0; color: var(--muted); font-size: .9rem; }
   header .unofficial { margin-top: 4px; font-size: .78rem; }
+  header .about-link { display: inline-block; margin-top: 6px; font-size: .85rem; color: var(--accent); font-weight: 600; text-decoration: none; }
+  header .about-link:hover { text-decoration: underline; }
 
   .card {
     background: var(--card);
@@ -162,6 +178,15 @@
   .progress-bar { height: 100%; width: 0; background: #ffd84d; border-radius: 999px; transition: width .4s ease; }
   .progress-text { display: flex; justify-content: space-between; gap: 8px; margin-top: 6px; font-size: .85rem; font-variant-numeric: tabular-nums; }
 
+  /* シェア */
+  .share-note { margin: 0 0 8px; font-size: .82rem; color: var(--muted); }
+  .share-preview {
+    margin: 0; padding: 12px 14px; border-radius: 10px; background: var(--bg);
+    font-family: inherit; font-size: .88rem; white-space: pre-wrap; word-break: break-all;
+  }
+  .btn.share-x { background: #111; border-color: #111; text-decoration: none; display: inline-block; }
+  .copy-status { align-self: center; font-size: .85rem; color: var(--ok); font-weight: 600; }
+
   /* 特典ptの横の注意マーク */
   .cap-info-btn {
     margin-left: 4px; width: 28px; height: 28px; border-radius: 50%;
@@ -243,6 +268,7 @@
     <h1>🏃 お買い物マラソン シミュレーター</h1>
     <p>買う予定のショップを入力すると、ポイント倍率ともらえるポイントの目安を計算します。</p>
     <p class="unofficial">※ 個人が作った非公式のツールです。楽天グループ株式会社とは関係ありません。</p>
+    <a class="about-link" href="about.html">ⓘ このツールについて（使い方・よくある質問）</a>
   </header>
 
   <!-- 特典ポイントの上限についての注意ポップアップ -->
@@ -307,6 +333,18 @@
     </div>
     <div class="meter" id="meter" aria-hidden="true"></div>
     <ul class="notes" id="notes"></ul>
+  </section>
+
+  <!-- シェア -->
+  <section class="card">
+    <h2>結果をシェアする</h2>
+    <p class="share-note">こんな文章でシェアされます（ショップ名や金額は入りません）</p>
+    <pre class="share-preview" id="sharePreview"></pre>
+    <div class="actions">
+      <a class="btn share-x" id="shareX" href="#" target="_blank" rel="noopener">𝕏 でポストする</a>
+      <button type="button" class="btn ghost" id="copyLink">🔗 リンクをコピー</button>
+      <span class="copy-status" id="copyStatus" role="status"></span>
+    </div>
   </section>
 
   <!-- 設定 -->
@@ -389,6 +427,9 @@
   const COUNT_UP_DURATION_MS = 1000;     // 数字のカウントアップにかける時間（ミリ秒）
   const RATE_DECIMALS = 1;              // 還元率の小数点以下の桁数
   const POPOVER_MARGIN = 8;             // ポップアップと画面の端・ボタンとのすき間（px）
+  const SHARE_URL = 'https://08-crypto-arch.github.io/my-project/claude-works/rakuten-marathon-simulator/'; // シェアするURL
+  const SHARE_HASHTAG = '#お買い物マラソン';
+  const COPY_MESSAGE_DURATION_MS = 2000; // 「コピーしました」を表示しておく時間
 
   // サンプルデータ
   const SAMPLE_SHOPS = [
@@ -538,6 +579,47 @@
     renderBreakdown(r);
     renderNotes(r);
     updateCollapsedHint(r);
+    renderShare(r);
+  }
+
+  // ===== シェア =====
+  // 今の結果からシェアする文章を作る（ショップ名や金額は入れない）
+  function buildShareText(r) {
+    const intro = 'あと何店舗？がひと目で分かるシミュレーター';
+    if (r.shopCount === 0) {
+      return `お買い物マラソンの「あと何店舗？」「上限まであといくら？」が\nひと目で分かるシミュレーター🏃\n${SHARE_HASHTAG}`;
+    }
+    if (r.rawBonus >= BONUS_POINT_CAP) {
+      return `お買い物マラソンを完走しました🏁\n${r.shopCount}店舗・${r.multiplier}倍で、特典ポイントは上限の${formatNumber(BONUS_POINT_CAP)}ptに到達！\n\n${intro}\n${SHARE_HASHTAG}`;
+    }
+    return `お買い物マラソンで ${r.shopCount}店舗・${r.multiplier}倍！\n特典ポイントは約${formatNumber(r.bonusPoints)}ptの見込み🏃\n\n${intro}\n${SHARE_HASHTAG}`;
+  }
+
+  function renderShare(r) {
+    const text = buildShareText(r);
+    $('sharePreview').textContent = `${text}\n${SHARE_URL}`;
+    const params = new URLSearchParams({ text, url: SHARE_URL });
+    $('shareX').href = `https://x.com/intent/post?${params}`;
+  }
+
+  // リンクをコピー（使えない環境では、選択してコピーする昔の方法で代わりにコピー）
+  async function copyShareUrl() {
+    let copied = false;
+    try {
+      await navigator.clipboard.writeText(SHARE_URL);
+      copied = true;
+    } catch {
+      const temp = document.createElement('textarea');
+      temp.value = SHARE_URL;
+      document.body.appendChild(temp);
+      temp.select();
+      copied = document.execCommand('copy');
+      temp.remove();
+    }
+    const status = $('copyStatus');
+    status.textContent = copied ? '✓ コピーしました！' : 'コピーできませんでした';
+    clearTimeout(copyShareUrl.timer);
+    copyShareUrl.timer = setTimeout(() => { status.textContent = ''; }, COPY_MESSAGE_DURATION_MS);
   }
 
   // ポイントの内訳を積み上げ棒グラフで表示
@@ -717,6 +799,7 @@
   });
 
   $('spuRate').addEventListener('input', renderResult);
+  $('copyLink').addEventListener('click', copyShareUrl);
 
   // グラフにマウスを乗せたときの吹き出し
   $('stackBar').addEventListener('mousemove', (e) => {
