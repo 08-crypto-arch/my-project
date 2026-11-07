@@ -399,9 +399,14 @@
     return { id: nextId++, name: data.name ?? '', amount: data.amount ?? '', taxRate: data.taxRate ?? TAX_RATE_STANDARD };
   }
 
-  // 税込金額から税抜金額を求める
+  // 税込金額から税抜金額を求める（楽天市場のヘルプの計算方法に合わせる）
+  //   消費税額 = 税込価格 × 税率 ÷ (100% + 税率) の小数点以下を切り捨て
+  //   税抜価格 = 税込価格 − 消費税額
+  // ※ 端数の処理はショップによって異なるため、ここでは切り捨てで計算する
   function toTaxExcluded(amount, taxRate) {
-    return Math.floor(amount / (1 + taxRate));
+    const ratePercent = Math.round(taxRate * PERCENT); // 小数の誤差を避けるため整数（10 や 8）で計算
+    const tax = Math.floor(amount * ratePercent / (PERCENT + ratePercent));
+    return amount - tax;
   }
 
   // ===== 計算 =====
