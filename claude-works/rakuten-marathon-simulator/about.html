@@ -3,185 +3,19 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>このツールについて | お買い物マラソン シミュレーター</title>
-<meta name="description" content="楽天市場のお買い物マラソンで、買いまわり店舗数・ポイント倍率・特典ポイントの目安をかんたんに計算できる無料のシミュレーターの使い方とよくある質問です。">
-
-<!-- OGP（URLを共有したときに表示されるカード） -->
-<meta property="og:type" content="article">
-<meta property="og:site_name" content="お買い物マラソン シミュレーター">
-<meta property="og:title" content="このツールについて | お買い物マラソン シミュレーター">
-<meta property="og:description" content="あと何店舗で何倍？上限7,000ptまであといくら？買いまわりの計算がひと目で分かる無料ツールの使い方とよくある質問。">
-<meta property="og:url" content="https://08-crypto-arch.github.io/my-project/claude-works/rakuten-marathon-simulator/about.html">
-<meta property="og:image" content="https://08-crypto-arch.github.io/my-project/claude-works/rakuten-marathon-simulator/ogp.png">
-<meta property="og:image:width" content="1200">
-<meta property="og:image:height" content="630">
-<meta property="og:image:alt" content="お買い物マラソン シミュレーター">
-<meta property="og:locale" content="ja_JP">
-<meta name="twitter:card" content="summary_large_image">
-
+<title>このツールについて（移転しました）</title>
+<!-- このページは pachisroom.com に引っ越しました。古いURLを開いた人を新しいURLへ案内する -->
+<link rel="canonical" href="https://pachisroom.com/tools/rakuten/about.html">
+<meta name="robots" content="noindex">
+<meta http-equiv="refresh" content="0; url=https://pachisroom.com/tools/rakuten/about.html">
+<script>location.replace('https://pachisroom.com/tools/rakuten/about.html' + location.search + location.hash);</script>
 <style>
-  :root {
-    --accent: #bf0000;
-    --accent-soft: #fdecec;
-    --ink: #222;
-    --muted: #6b6b6b;
-    --line: #e5e1dc;
-    --bg: #faf7f4;
-    --card: #fff;
-  }
-  * { box-sizing: border-box; }
-  body {
-    margin: 0;
-    font-family: "Hiragino Sans", "Noto Sans JP", "Yu Gothic UI", sans-serif;
-    background: var(--bg);
-    color: var(--ink);
-    line-height: 1.7;
-  }
-  .wrap { max-width: 760px; margin: 0 auto; padding: 24px 16px 48px; }
-
-  .top-nav { font-size: .85rem; }
-  .top-nav a { color: var(--accent); text-decoration: none; }
-  .top-nav a:hover { text-decoration: underline; }
-
-  /* ヒーロー */
-  .hero {
-    margin-top: 16px; border-radius: 16px; padding: 28px 22px;
-    background: linear-gradient(135deg, var(--accent), #e23a3a); color: #fff;
-  }
-  .hero .eyebrow { font-size: .85rem; opacity: .9; margin: 0; }
-  .hero h1 { font-size: 1.7rem; line-height: 1.35; margin: 6px 0 10px; }
-  .hero p { margin: 0; }
-  .hero .unofficial { margin-top: 10px; font-size: .78rem; opacity: .9; }
-
-  .start-btn {
-    display: inline-block; margin-top: 18px; padding: 12px 22px; border-radius: 999px;
-    background: #fff; color: var(--accent); font-weight: 700; text-decoration: none;
-    box-shadow: 0 2px 8px rgba(0,0,0,.12);
-  }
-  .start-btn:hover { transform: translateY(-1px); }
-  .start-btn:focus-visible { outline: 3px solid #ffd84d; outline-offset: 2px; }
-  .start-btn.solid { background: var(--accent); color: #fff; }
-
-  .card {
-    background: var(--card); border: 1px solid var(--line); border-radius: 14px;
-    padding: 22px 20px; margin-top: 16px;
-  }
-  .card h2 { font-size: 1.15rem; margin: 0 0 12px; }
-  .card p { margin: 0 0 8px; }
-
-  /* できること */
-  .features { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
-  .features li { display: flex; gap: 10px; align-items: flex-start; }
-  .features .icon { flex: none; width: 28px; text-align: center; font-size: 1.1rem; }
-
-  /* 使い方のステップ */
-  .steps { list-style: none; margin: 0; padding: 0; display: grid; gap: 12px; counter-reset: step; }
-  .steps li { display: flex; gap: 12px; align-items: flex-start; }
-  .steps li::before {
-    counter-increment: step; content: counter(step);
-    flex: none; width: 30px; height: 30px; border-radius: 50%;
-    background: var(--accent); color: #fff; font-weight: 700;
-    display: grid; place-items: center; font-size: .9rem;
-  }
-  .steps strong { display: block; }
-  .steps span { color: var(--muted); font-size: .9rem; }
-
-  /* よくある質問 */
-  .faq details { border-top: 1px solid var(--line); }
-  .faq details:last-child { border-bottom: 1px solid var(--line); }
-  .faq summary {
-    cursor: pointer; padding: 14px 32px 14px 0; font-weight: 600; list-style: none; position: relative;
-  }
-  .faq summary::-webkit-details-marker { display: none; }
-  .faq summary::before { content: "Q. "; color: var(--accent); }
-  .faq summary::after {
-    content: "▼"; position: absolute; right: 4px; top: 50%; transform: translateY(-50%);
-    font-size: .75rem; color: var(--muted); transition: transform .2s;
-  }
-  .faq details[open] summary::after { transform: translateY(-50%) rotate(180deg); }
-  .faq summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
-  .faq .answer { padding: 0 0 14px; color: #444; font-size: .93rem; }
-  .faq .answer::before { content: "A. "; font-weight: 700; color: var(--muted); }
-
-  .bottom-cta { text-align: center; margin-top: 24px; }
-  footer { margin-top: 24px; font-size: .78rem; color: var(--muted); text-align: center; }
-
-  @media (max-width: 480px) {
-    .hero h1 { font-size: 1.35rem; }
-    .hero h1 br { display: none; }
-  }
-  @media (prefers-reduced-motion: reduce) {
-    .faq summary::after { transition: none; }
-  }
+  body { margin: 0; font-family: "Hiragino Sans", "Noto Sans JP", "Yu Gothic UI", sans-serif; background: #faf7f4; color: #222; display: grid; place-items: center; min-height: 100vh; padding: 16px; box-sizing: border-box; text-align: center; }
+  a { color: #bf0000; font-weight: 700; }
 </style>
 </head>
 <body>
-<div class="wrap">
-  <nav class="top-nav"><a href="./">← シミュレーターに戻る</a></nav>
-
-  <!-- ヒーロー -->
-  <section class="hero">
-    <p class="eyebrow">🏃 お買い物マラソン シミュレーター</p>
-    <h1>「あと何店舗？」「上限まであといくら？」<br>買いまわりの計算を、ひと目で。</h1>
-    <p>楽天市場のお買い物マラソンで、買う予定のショップを入れるだけ。ポイント倍率ともらえるポイントの目安を自動で計算します。登録もインストールも不要です。</p>
-    <a class="start-btn" href="./">シミュレーターを使ってみる →</a>
-    <p class="unofficial">※ 個人が作った非公式のツールです。楽天グループ株式会社とは関係ありません。</p>
-  </section>
-
-  <!-- できること -->
-  <section class="card">
-    <h2>このツールでできること</h2>
-    <ul class="features">
-      <li><span class="icon" aria-hidden="true">🛍</span><span>ショップごとの金額から、<strong>買いまわり店舗数・ポイント倍率・特典ポイント</strong>を計算</span></li>
-      <li><span class="icon" aria-hidden="true">✅</span><span>1,000円に届いていないショップに「あと◯円」を表示</span></li>
-      <li><span class="icon" aria-hidden="true">💡</span><span>「あと1店舗で6倍」「あと◯円で上限」など、次にお得になる買い方をお知らせ</span></li>
-      <li><span class="icon" aria-hidden="true">🏁</span><span>上限7,000ptまでの進み具合をバーで表示。届いたら「完走おめでとう！」</span></li>
-      <li><span class="icon" aria-hidden="true">📊</span><span>ふだんのポイント倍率（SPU）も入れて、もらえるポイントの合計と実質の還元率を確認</span></li>
-    </ul>
-  </section>
-
-  <!-- 使い方 -->
-  <section class="card">
-    <h2>使い方</h2>
-    <ol class="steps">
-      <li><div><strong>楽天市場でキャンペーンにエントリーする</strong><span>お買い物マラソンはエントリーが必要です。エントリー前のお買い物も対象になります。</span></div></li>
-      <li><div><strong>買う予定のショップを入力する</strong><span>ショップ名・金額（税込・クーポン使用後、送料は含めない）・税率を入れます。食品は8%を選んでください。</span></div></li>
-      <li><div><strong>倍率とポイントを確認する</strong><span>店舗数・倍率・もらえるポイントが自動で計算されます。「あと何店舗」「あといくら」のお知らせも参考にしてください。</span></div></li>
-    </ol>
-  </section>
-
-  <!-- よくある質問 -->
-  <section class="card faq">
-    <h2>よくある質問</h2>
-    <details>
-      <summary>1,000円未満のショップはどうなりますか？</summary>
-      <p class="answer">店舗数にはカウントされません。同じショップでの買い物は合算されるので、買い足して1,000円（税込・クーポン使用後・送料別）以上にすれば、1店舗としてカウントされます。</p>
-    </details>
-    <details>
-      <summary>特典ポイントの上限を超えるとどうなりますか？</summary>
-      <p class="answer">お買い物マラソンの特典ポイントは、すべてのショップの合計で7,000ptまでです。超えた分はもらえません。シミュレーターでは、上限を超えると各ショップの横に⚠マークが出て、何pt分がもらえないかを確認できます。</p>
-    </details>
-    <details>
-      <summary>SPU（ふだんのポイント倍率）とは何ですか？</summary>
-      <p class="answer">楽天カードの利用や楽天のサービスの利用などで上がる、ふだんのお買い物のポイント倍率です。分からない場合は「1」のままで大丈夫です。マラソンの特典とは別に計算します。</p>
-    </details>
-    <details>
-      <summary>計算結果は、実際にもらえるポイントと同じですか？</summary>
-      <p class="answer">あくまで目安です。税抜金額は楽天市場のヘルプの計算方法に合わせていますが、端数の処理はショップによって違い、楽天では1商品ごとに計算するため、数ポイントずれることがあります。実際のポイントは、商品ページやお買い物かごの獲得予定ポイントで確認してください。</p>
-    </details>
-    <details>
-      <summary>入力した内容は保存されたり、送信されたりしますか？</summary>
-      <p class="answer">いいえ。入力した内容は、お使いのブラウザの中で計算するだけで、どこにも送信・保存されません。ページを閉じると消えます。</p>
-    </details>
-  </section>
-
-  <div class="bottom-cta">
-    <a class="start-btn solid" href="./">シミュレーターを使ってみる →</a>
-  </div>
-
-  <footer>
-    ※ 個人が作った非公式のツールです。楽天グループ株式会社とは関係ありません。計算結果はあくまで目安です。最新のルールは楽天市場の公式キャンペーンページで確認してください。
-  </footer>
-</div>
+  <p>このページは引っ越しました。<br>
+  自動で移動しない場合は、<a href="https://pachisroom.com/tools/rakuten/about.html">新しいページ</a>を開いてください。</p>
 </body>
 </html>
